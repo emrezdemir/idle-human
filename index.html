@@ -32,6 +32,7 @@
       <nav class="tabs">
         <button class="tab active" data-tab="generators">Üreticiler</button>
         <button class="tab" data-tab="upgrades">Yükseltmeler</button>
+        <button class="tab" data-tab="prestige">Prestij</button>
       </nav>
 
       <!-- Toplu alım seçici -->
@@ -45,6 +46,21 @@
 
       <section id="generators" class="tab-panel active"></section>
       <section id="upgrades" class="tab-panel"></section>
+      <section id="prestige" class="tab-panel">
+        <div class="prestige-card">
+          <div class="prestige-icon">🧬</div>
+          <p class="prestige-genes">Genlerin: <strong id="geneCount">0</strong></p>
+          <p class="prestige-bonus">Şu anki bonus: <strong id="geneBonus">+%0</strong> üretim</p>
+          <hr class="prestige-sep" />
+          <p class="prestige-next">
+            Şimdi yeniden doğarsan:<br />
+            <span class="prestige-gain">+<span id="prestigeGain">0</span> Gen</span>
+          </p>
+          <p class="prestige-hint" id="prestigeHint"></p>
+          <button id="prestigeButton" class="primary-button">🌱 Yeniden Doğ</button>
+          <p class="prestige-count">Toplam yeniden doğuş: <span id="prestigeCount">0</span></p>
+        </div>
+      </section>
     </main>
 
     <footer class="bottombar">

@@ -46,8 +46,11 @@ function newState() {
   GENERATORS.forEach((g) => (owned[g.id] = 0));
   return {
     population: 0,
-    totalEarned: 0,
+    totalEarned: 0, // tüm zamanların kazancı (prestijde sıfırlanmaz)
+    runEarned: 0, // bu turun kazancı (prestijde sıfırlanır)
     clicks: 0,
+    genes: 0, // kalıcı prestij puanı
+    prestiges: 0, // kaç kez prestij yapıldı
     owned,
     upgrades: {}, // id -> true
     lastSeen: Date.now(),
@@ -59,6 +62,21 @@ let state = newState();
 // Toplu alım miktarı: 1, 10, 100 veya "max" (kaydedilmez, UI tercihi)
 let buyAmount = 1;
 
+/* --- Prestij sabitleri ------------------------------------------------ */
+
+const GENES_THRESHOLD = 1e6; // ilk gen için gereken tur kazancı
+const GENE_BONUS = 0.1; // her gen tüm üretime +%10
+
+// Gen puanlarından gelen küresel çarpan (üretim ve dokunuş için).
+function geneMultiplier() {
+  return 1 + state.genes * GENE_BONUS;
+}
+
+// Şu an prestij yapılırsa kazanılacak gen sayısı.
+function prestigeGain() {
+  return Math.floor(Math.sqrt(state.runEarned / GENES_THRESHOLD));
+}
+
 /* --- Hesaplamalar ----------------------------------------------------- */
 
 function clickPower() {
@@ -66,7 +84,7 @@ function clickPower() {
   UPGRADES.forEach((u) => {
     if (u.type === "click" && state.upgrades[u.id]) power *= u.mult;
   });
-  return power;
+  return power * geneMultiplier();
 }
 
 function generatorRate(gen) {
@@ -76,7 +94,7 @@ function generatorRate(gen) {
     if (u.type === "all") rate *= u.mult;
     if (u.type === "gen" && u.targetId === gen.id) rate *= u.mult;
   });
-  return rate;
+  return rate * geneMultiplier();
 }
 
 function totalPerSecond() {
@@ -148,6 +166,34 @@ function buyGenerator(gen) {
   renderResource();
 }
 
+function doPrestige() {
+  const gain = prestigeGain();
+  if (gain < 1) {
+    showToast("Henüz yeterli ilerleme yok");
+    return;
+  }
+  if (
+    !confirm(
+      `Yeniden doğacaksın!\n\n+${fmt(gain)} Gen kazanacaksın (kalıcı +%${gain * GENE_BONUS * 100} üretim).\n\nPuanların, üreticilerin ve yükseltmelerin sıfırlanacak. Genlerin kalır.\n\nEmin misin?`
+    )
+  )
+    return;
+
+  const keptGenes = state.genes + gain;
+  const keptTotal = state.totalEarned;
+  const keptPrestiges = state.prestiges + 1;
+  state = newState();
+  state.genes = keptGenes;
+  state.totalEarned = keptTotal;
+  state.prestiges = keptPrestiges;
+
+  renderShops();
+  renderResource();
+  renderPrestige();
+  save(false);
+  showToast(`🧬 Yeniden doğdun! +${fmt(gain)} Gen`);
+}
+
 function buyUpgrade(up) {
   if (state.upgrades[up.id] || state.population < up.cost) return;
   state.population -= up.cost;
@@ -163,6 +209,7 @@ function handleClick(evt) {
   const gain = clickPower();
   state.population += gain;
   state.totalEarned += gain;
+  state.runEarned += gain;
   state.clicks++;
   spawnFloatText(evt, "+" + fmt(gain));
   renderResource();
@@ -241,12 +288,33 @@ function renderShops() {
   });
 }
 
+function renderPrestige() {
+  const gain = prestigeGain();
+  document.getElementById("geneCount").textContent = fmt(state.genes);
+  document.getElementById("geneBonus").textContent =
+    "+%" + Math.round(state.genes * GENE_BONUS * 100);
+  document.getElementById("prestigeGain").textContent = fmt(gain);
+  document.getElementById("prestigeCount").textContent = fmt(state.prestiges);
+
+  const hint = document.getElementById("prestigeHint");
+  const btn = document.getElementById("prestigeButton");
+  if (gain < 1) {
+    const need = fmt(GENES_THRESHOLD);
+    hint.textContent = `İlk Gen için bu turda ${need} İnsanlık Puanı kazanman gerek.`;
+    btn.disabled = true;
+  } else {
+    hint.textContent = `Yeni bonus: +%${Math.round((state.genes + gain) * GENE_BONUS * 100)} üretim`;
+    btn.disabled = false;
+  }
+}
+
 function renderResource() {
   el.population.textContent = fmt(state.population);
   el.perSecond.textContent = "+" + fmt(totalPerSecond()) + " / sn";
   el.clickPower.textContent = fmt(clickPower());
   // Mağaza butonlarının erişilebilirlik durumunu güncelle (ucuz işlem)
   refreshAffordability();
+  renderPrestige();
 }
 
 // Sadece disabled/affordable durumunu günceller; innerHTML'i yeniden yazmaz.
@@ -291,6 +359,7 @@ function gameLoop() {
   if (gain > 0) {
     state.population += gain;
     state.totalEarned += gain;
+    state.runEarned += gain;
   }
   renderResource();
 }
@@ -332,6 +401,7 @@ function applyOfflineProgress() {
   if (gain <= 0) return;
   state.population += gain;
   state.totalEarned += gain;
+  state.runEarned += gain;
   showOfflineModal(gain, elapsed);
 }
 
@@ -414,6 +484,7 @@ function init() {
   el.clickButton.addEventListener("click", handleClick);
   document.getElementById("saveButton").addEventListener("click", () => save(true));
   document.getElementById("resetButton").addEventListener("click", hardReset);
+  document.getElementById("prestigeButton").addEventListener("click", doPrestige);
   document.getElementById("offlineClose").addEventListener("click", () => {
     document.getElementById("offlineModal").classList.add("hidden");
     renderResource();

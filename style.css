@@ -285,6 +285,72 @@ main {
   color: var(--text-dim);
 }
 
+/* Prestij paneli */
+.prestige-card {
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.prestige-icon {
+  font-size: 3.5rem;
+}
+
+.prestige-genes,
+.prestige-bonus {
+  margin: 6px 0;
+  font-size: 1rem;
+}
+
+.prestige-genes strong {
+  color: var(--accent-2);
+  font-size: 1.2rem;
+}
+
+.prestige-bonus strong {
+  color: var(--accent);
+}
+
+.prestige-sep {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 16px 0;
+}
+
+.prestige-next {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  margin: 8px 0;
+}
+
+.prestige-gain {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--accent-2);
+}
+
+.prestige-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin: 8px 0 16px;
+  min-height: 1em;
+}
+
+.prestige-count {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-top: 14px;
+}
+
+.primary-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Alt bar */
 .bottombar {
   display: flex;
