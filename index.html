@@ -33,6 +33,7 @@
         <button class="tab active" data-tab="generators">Üreticiler</button>
         <button class="tab" data-tab="upgrades">Yükseltmeler</button>
         <button class="tab" data-tab="prestige">Prestij</button>
+        <button class="tab" data-tab="achievements">🏆</button>
       </nav>
 
       <!-- Toplu alım seçici -->
@@ -61,9 +62,14 @@
           <p class="prestige-count">Toplam yeniden doğuş: <span id="prestigeCount">0</span></p>
         </div>
       </section>
+      <section id="achievements" class="tab-panel">
+        <p class="ach-summary"><span id="achCount">0</span>/<span id="achTotal">0</span> başarım · <span id="achBonus">+%0</span> üretim bonusu</p>
+        <div id="achList" class="ach-list"></div>
+      </section>
     </main>
 
     <footer class="bottombar">
+      <button id="soundButton" class="ghost-button">🔊 Ses</button>
       <button id="saveButton" class="ghost-button">💾 Kaydet</button>
       <button id="resetButton" class="ghost-button danger">♻️ Sıfırla</button>
     </footer>

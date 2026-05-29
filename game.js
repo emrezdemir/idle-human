@@ -39,6 +39,31 @@ const UPGRADES = [
   { id: "u_all_3",   icon: "🌐", name: "Dijital Çağ",       desc: "Tüm pasif üretim x3",        cost: 1e9,     type: "all", mult: 3 },
 ];
 
+// Başarımlar: koşul sağlanınca kalıcı açılır, her biri +%1 üretim verir.
+// check(s) -> boolean; s = oyun durumu
+const ACHIEVEMENTS = [
+  { id: "a_first_click", icon: "👆", name: "İlk Adım", desc: "İlk dokunuşunu yap", check: (s) => s.clicks >= 1 },
+  { id: "a_100_clicks", icon: "✋", name: "Çalışkan", desc: "100 kez dokun", check: (s) => s.clicks >= 100 },
+  { id: "a_1000_clicks", icon: "🙌", name: "Yorulmaz", desc: "1.000 kez dokun", check: (s) => s.clicks >= 1000 },
+  { id: "a_pop_1k", icon: "🏘️", name: "Topluluk", desc: "1.000 puana ulaş", check: (s) => s.population >= 1e3 },
+  { id: "a_pop_1m", icon: "🏙️", name: "Şehir", desc: "1M puana ulaş", check: (s) => s.population >= 1e6 },
+  { id: "a_earn_1b", icon: "🌍", name: "Medeniyet", desc: "Toplam 1B kazan", check: (s) => s.totalEarned >= 1e9 },
+  { id: "a_first_gen", icon: "🤝", name: "İlk Yardımcı", desc: "Bir üretici al", check: (s) => totalOwned(s) >= 1 },
+  { id: "a_gen_50", icon: "👥", name: "Kalabalık", desc: "Toplam 50 üretici sahibi ol", check: (s) => totalOwned(s) >= 50 },
+  { id: "a_all_types", icon: "🌈", name: "Çeşitlilik", desc: "Her üretici türünden en az 1 al", check: (s) => GENERATORS.every((g) => s.owned[g.id] >= 1) },
+  { id: "a_first_upg", icon: "⬆️", name: "Gelişim", desc: "Bir yükseltme al", check: (s) => Object.keys(s.upgrades).length >= 1 },
+  { id: "a_first_prestige", icon: "🧬", name: "Yeniden Doğuş", desc: "İlk kez prestij yap", check: (s) => s.prestiges >= 1 },
+  { id: "a_genes_10", icon: "🧪", name: "Evrim", desc: "10 Gen biriktir", check: (s) => s.genes >= 10 },
+];
+
+function totalOwned(s) {
+  return GENERATORS.reduce((sum, g) => sum + (s.owned[g.id] || 0), 0);
+}
+
+function unlockedCount() {
+  return Object.keys(state.unlocked).length;
+}
+
 /* --- Oyun durumu ------------------------------------------------------ */
 
 function newState() {
@@ -53,6 +78,8 @@ function newState() {
     prestiges: 0, // kaç kez prestij yapıldı
     owned,
     upgrades: {}, // id -> true
+    unlocked: {}, // açılan başarımlar: id -> true
+    soundOn: true,
     lastSeen: Date.now(),
   };
 }
@@ -67,9 +94,20 @@ let buyAmount = 1;
 const GENES_THRESHOLD = 1e6; // ilk gen için gereken tur kazancı
 const GENE_BONUS = 0.1; // her gen tüm üretime +%10
 
-// Gen puanlarından gelen küresel çarpan (üretim ve dokunuş için).
+// Gen puanlarından gelen çarpan.
 function geneMultiplier() {
   return 1 + state.genes * GENE_BONUS;
+}
+
+// Açılan her başarım tüm üretime +%1 katar.
+const ACH_BONUS = 0.01;
+function achievementMultiplier() {
+  return 1 + unlockedCount() * ACH_BONUS;
+}
+
+// Üretime ve dokunuşa uygulanan toplam küresel çarpan.
+function globalMultiplier() {
+  return geneMultiplier() * achievementMultiplier();
 }
 
 // Şu an prestij yapılırsa kazanılacak gen sayısı.
@@ -84,7 +122,7 @@ function clickPower() {
   UPGRADES.forEach((u) => {
     if (u.type === "click" && state.upgrades[u.id]) power *= u.mult;
   });
-  return power * geneMultiplier();
+  return power * globalMultiplier();
 }
 
 function generatorRate(gen) {
@@ -94,7 +132,7 @@ function generatorRate(gen) {
     if (u.type === "all") rate *= u.mult;
     if (u.type === "gen" && u.targetId === gen.id) rate *= u.mult;
   });
-  return rate * geneMultiplier();
+  return rate * globalMultiplier();
 }
 
 function totalPerSecond() {
@@ -143,6 +181,46 @@ function fmt(n) {
   return scaled.toFixed(scaled < 10 ? 2 : scaled < 100 ? 1 : 0) + SUFFIXES[tier];
 }
 
+/* --- Ses (Web Audio API, dosyasız) ------------------------------------ */
+
+let audioCtx = null;
+
+function ensureAudio() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (Ctx) audioCtx = new Ctx();
+  }
+  // Tarayıcılar kullanıcı etkileşimine kadar AudioContext'i askıya alabilir
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+}
+
+function playTone(freq, duration, type, volume) {
+  if (!state.soundOn || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || "sine";
+  osc.frequency.value = freq;
+  const now = audioCtx.currentTime;
+  gain.gain.setValueAtTime(volume || 0.1, now);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + duration);
+}
+
+function playClick() {
+  playTone(440 + Math.random() * 60, 0.08, "triangle", 0.08);
+}
+
+function playBuy() {
+  playTone(523, 0.1, "square", 0.06);
+  setTimeout(() => playTone(784, 0.12, "square", 0.06), 70);
+}
+
+function playAchievement() {
+  [523, 659, 784].forEach((f, i) => setTimeout(() => playTone(f, 0.15, "sine", 0.1), i * 90));
+}
+
 /* --- DOM referansları -------------------------------------------------- */
 
 const el = {
@@ -162,6 +240,7 @@ function buyGenerator(gen) {
   if (n < 1 || state.population < cost) return;
   state.population -= cost;
   state.owned[gen.id] += n;
+  playBuy();
   renderShops();
   renderResource();
 }
@@ -182,10 +261,16 @@ function doPrestige() {
   const keptGenes = state.genes + gain;
   const keptTotal = state.totalEarned;
   const keptPrestiges = state.prestiges + 1;
+  const keptUnlocked = state.unlocked;
+  const keptClicks = state.clicks;
+  const keptSound = state.soundOn;
   state = newState();
   state.genes = keptGenes;
   state.totalEarned = keptTotal;
   state.prestiges = keptPrestiges;
+  state.unlocked = keptUnlocked;
+  state.clicks = keptClicks;
+  state.soundOn = keptSound;
 
   renderShops();
   renderResource();
@@ -198,19 +283,36 @@ function buyUpgrade(up) {
   if (state.upgrades[up.id] || state.population < up.cost) return;
   state.population -= up.cost;
   state.upgrades[up.id] = true;
+  playBuy();
   showToast(`${up.icon} ${up.name} alındı!`);
   renderShops();
   renderResource();
 }
 
+// Açılmamış başarımları kontrol et, yenileri açıldıysa bildir.
+function checkAchievements() {
+  let changed = false;
+  ACHIEVEMENTS.forEach((a) => {
+    if (!state.unlocked[a.id] && a.check(state)) {
+      state.unlocked[a.id] = true;
+      changed = true;
+      playAchievement();
+      showToast(`🏆 Başarım: ${a.name}`);
+    }
+  });
+  if (changed) renderAchievements();
+}
+
 /* --- Tıklama ----------------------------------------------------------- */
 
 function handleClick(evt) {
+  ensureAudio();
   const gain = clickPower();
   state.population += gain;
   state.totalEarned += gain;
   state.runEarned += gain;
   state.clicks++;
+  playClick();
   spawnFloatText(evt, "+" + fmt(gain));
   renderResource();
 }
@@ -308,6 +410,43 @@ function renderPrestige() {
   }
 }
 
+function renderAchievements() {
+  const list = document.getElementById("achList");
+  if (!list) return;
+  document.getElementById("achCount").textContent = unlockedCount();
+  document.getElementById("achTotal").textContent = ACHIEVEMENTS.length;
+  document.getElementById("achBonus").textContent =
+    "+%" + unlockedCount() * Math.round(ACH_BONUS * 100);
+  list.innerHTML = "";
+  ACHIEVEMENTS.forEach((a) => {
+    const unlocked = !!state.unlocked[a.id];
+    const row = document.createElement("div");
+    row.className = "ach-card" + (unlocked ? " unlocked" : " locked");
+    row.innerHTML = `
+      <span class="card-icon">${unlocked ? a.icon : "🔒"}</span>
+      <span class="card-body">
+        <span class="card-title">${a.name}</span>
+        <span class="card-desc">${a.desc}</span>
+      </span>`;
+    list.appendChild(row);
+  });
+}
+
+function updateSoundButton() {
+  const btn = document.getElementById("soundButton");
+  if (btn) btn.textContent = state.soundOn ? "🔊 Ses" : "🔇 Kapalı";
+}
+
+function toggleSound() {
+  state.soundOn = !state.soundOn;
+  updateSoundButton();
+  if (state.soundOn) {
+    ensureAudio();
+    playBuy();
+  }
+  save(false);
+}
+
 function renderResource() {
   el.population.textContent = fmt(state.population);
   el.perSecond.textContent = "+" + fmt(totalPerSecond()) + " / sn";
@@ -361,6 +500,7 @@ function gameLoop() {
     state.totalEarned += gain;
     state.runEarned += gain;
   }
+  checkAchievements();
   renderResource();
 }
 
@@ -479,12 +619,15 @@ function init() {
   setupBuyAmount();
 
   if (loaded) applyOfflineProgress();
+  renderAchievements();
+  updateSoundButton();
   renderResource();
 
   el.clickButton.addEventListener("click", handleClick);
   document.getElementById("saveButton").addEventListener("click", () => save(true));
   document.getElementById("resetButton").addEventListener("click", hardReset);
   document.getElementById("prestigeButton").addEventListener("click", doPrestige);
+  document.getElementById("soundButton").addEventListener("click", toggleSound);
   document.getElementById("offlineClose").addEventListener("click", () => {
     document.getElementById("offlineModal").classList.add("hidden");
     renderResource();
