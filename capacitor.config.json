@@ -1,0 +1,9 @@
+{
+  "appId": "com.idlehuman.game",
+  "appName": "Idle Human",
+  "webDir": "www",
+  "backgroundColor": "#1b1033",
+  "android": {
+    "backgroundColor": "#1b1033"
+  }
+}

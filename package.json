@@ -1,0 +1,21 @@
+{
+  "name": "idle-human",
+  "version": "1.0.0",
+  "description": "Bir insandan başlayıp medeniyeti büyüten idle/clicker oyunu",
+  "private": true,
+  "scripts": {
+    "serve": "python3 -m http.server 8000 --directory www",
+    "cap:add": "cap add android",
+    "cap:sync": "cap sync android",
+    "cap:copy": "cap copy android",
+    "cap:open": "cap open android",
+    "android:build": "cap sync android && cd android && ./gradlew assembleDebug"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.0"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/core": "^6.1.0"
+  }
+}

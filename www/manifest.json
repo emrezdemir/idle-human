@@ -1,0 +1,12 @@
+{
+  "name": "Idle Human",
+  "short_name": "Idle Human",
+  "description": "Bir insandan başlayıp medeniyeti büyüten idle/clicker oyunu",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1b1033",
+  "theme_color": "#1b1033",
+  "lang": "tr",
+  "icons": []
+}
