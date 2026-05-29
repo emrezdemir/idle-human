@@ -1,0 +1,13 @@
+# Bağımlılıklar
+node_modules/
+
+# Capacitor / Android paketleme çıktıları
+android/
+ios/
+*.apk
+*.aab
+
+# Editör / sistem
+.DS_Store
+.vscode/
+.idea/

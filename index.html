@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1b1033" />
+  <title>Idle Human</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <h1 class="logo">🧬 Idle Human</h1>
+      <div class="resource">
+        <span id="population" class="resource-value">0</span>
+        <span class="resource-label">İnsanlık Puanı</span>
+        <span id="perSecond" class="resource-rate">+0 / sn</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- Tıklama alanı -->
+      <section class="clicker">
+        <button id="clickButton" class="click-button" aria-label="Üret">
+          <span class="click-emoji">🧑</span>
+        </button>
+        <p class="click-hint">Dokun ve insanlığı ilerlet</p>
+        <p class="click-power">Dokunuş başına: <strong id="clickPower">1</strong></p>
+      </section>
+
+      <!-- Sekmeler -->
+      <nav class="tabs">
+        <button class="tab active" data-tab="generators">Üreticiler</button>
+        <button class="tab" data-tab="upgrades">Yükseltmeler</button>
+      </nav>
+
+      <section id="generators" class="tab-panel active"></section>
+      <section id="upgrades" class="tab-panel"></section>
+    </main>
+
+    <footer class="bottombar">
+      <button id="saveButton" class="ghost-button">💾 Kaydet</button>
+      <button id="resetButton" class="ghost-button danger">♻️ Sıfırla</button>
+    </footer>
+  </div>
+
+  <!-- Offline kazanç bildirimi -->
+  <div id="offlineModal" class="modal hidden">
+    <div class="modal-card">
+      <h2>🌙 Tekrar hoş geldin!</h2>
+      <p>Sen yokken insanlık çalışmaya devam etti.</p>
+      <p class="offline-gain">+<span id="offlineAmount">0</span> İnsanlık Puanı</p>
+      <p class="offline-time" id="offlineTime"></p>
+      <button id="offlineClose" class="primary-button">Topla</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="game.js"></script>
+</body>
+</html>
