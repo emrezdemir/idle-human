@@ -56,6 +56,9 @@ function newState() {
 
 let state = newState();
 
+// Toplu alım miktarı: 1, 10, 100 veya "max" (kaydedilmez, UI tercihi)
+let buyAmount = 1;
+
 /* --- Hesaplamalar ----------------------------------------------------- */
 
 function clickPower() {
@@ -82,6 +85,32 @@ function totalPerSecond() {
 
 function generatorCost(gen) {
   return Math.floor(gen.baseCost * Math.pow(gen.costGrowth, state.owned[gen.id]));
+}
+
+// N adet üreticinin toplam maliyeti (geometrik seri toplamı).
+function bulkCost(gen, n) {
+  const r = gen.costGrowth;
+  const k = state.owned[gen.id];
+  const first = gen.baseCost * Math.pow(r, k);
+  return Math.floor((first * (Math.pow(r, n) - 1)) / (r - 1));
+}
+
+// Mevcut puanla satın alınabilecek en fazla adet.
+function maxAffordable(gen) {
+  const r = gen.costGrowth;
+  const k = state.owned[gen.id];
+  const first = gen.baseCost * Math.pow(r, k);
+  // first * (r^n - 1)/(r-1) <= population  ->  n <= log_r( pop*(r-1)/first + 1 )
+  const ratio = (state.population * (r - 1)) / first + 1;
+  if (ratio <= 1) return 0;
+  return Math.floor(Math.log(ratio) / Math.log(r));
+}
+
+// Şu anki toplu alım moduna göre (adet, maliyet) döndürür.
+function purchasePlan(gen) {
+  let n = buyAmount === "max" ? maxAffordable(gen) : buyAmount;
+  if (buyAmount === "max" && n < 1) n = 1; // göstermek için en az 1
+  return { n, cost: bulkCost(gen, n) };
 }
 
 /* --- Sayı biçimlendirme ----------------------------------------------- */
@@ -111,10 +140,10 @@ const el = {
 /* --- Satın alma ------------------------------------------------------- */
 
 function buyGenerator(gen) {
-  const cost = generatorCost(gen);
-  if (state.population < cost) return;
+  const { n, cost } = purchasePlan(gen);
+  if (n < 1 || state.population < cost) return;
   state.population -= cost;
-  state.owned[gen.id]++;
+  state.owned[gen.id] += n;
   renderShops();
   renderResource();
 }
@@ -178,18 +207,19 @@ function renderShops() {
   GENERATORS.forEach((gen) => {
     const btn = el.generators.querySelector(`[data-gen="${gen.id}"]`);
     if (!btn) return;
-    const cost = generatorCost(gen);
-    const affordable = state.population >= cost;
+    const { n, cost } = purchasePlan(gen);
+    const affordable = n >= 1 && state.population >= cost;
     btn.disabled = !affordable;
+    const amountTag = buyAmount === "max" ? `(${n})` : `×${buyAmount}`;
     btn.innerHTML = `
       <span class="card-icon">${gen.icon}</span>
       <span class="card-body">
-        <span class="card-title">${gen.name}</span>
+        <span class="card-title">${gen.name} <span class="card-buy-tag">${amountTag}</span></span>
         <span class="card-desc">${gen.desc} · +${fmt(generatorRate(gen) || gen.baseRate)}/sn</span>
       </span>
       <span class="card-meta">
         <span class="card-cost ${affordable ? "affordable" : ""}">${fmt(cost)}</span>
-        <span class="card-count">×${state.owned[gen.id]}</span>
+        <span class="card-count">sahip: ${state.owned[gen.id]}</span>
       </span>`;
   });
 
@@ -224,10 +254,19 @@ function refreshAffordability() {
   GENERATORS.forEach((gen) => {
     const btn = el.generators.querySelector(`[data-gen="${gen.id}"]`);
     if (!btn) return;
-    const affordable = state.population >= generatorCost(gen);
+    const { n, cost } = purchasePlan(gen);
+    const affordable = n >= 1 && state.population >= cost;
     btn.disabled = !affordable;
     const costEl = btn.querySelector(".card-cost");
-    if (costEl) costEl.classList.toggle("affordable", affordable);
+    if (costEl) {
+      costEl.textContent = fmt(cost);
+      costEl.classList.toggle("affordable", affordable);
+    }
+    // MAKS modunda adet sürekli değişir; etiketi de güncelle
+    if (buyAmount === "max") {
+      const tagEl = btn.querySelector(".card-buy-tag");
+      if (tagEl) tagEl.textContent = `(${n})`;
+    }
   });
   UPGRADES.forEach((up) => {
     const btn = el.upgrades.querySelector(`[data-upgrade="${up.id}"]`);
@@ -336,12 +375,27 @@ function showToast(msg) {
 /* --- Sekmeler ---------------------------------------------------------- */
 
 function setupTabs() {
+  const buyBar = document.getElementById("buyAmountBar");
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
       document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
       tab.classList.add("active");
       document.getElementById(tab.dataset.tab).classList.add("active");
+      // Toplu alım çubuğu yalnızca Üreticiler sekmesinde anlamlı
+      buyBar.classList.toggle("hidden", tab.dataset.tab !== "generators");
+    });
+  });
+}
+
+function setupBuyAmount() {
+  document.querySelectorAll(".buy-amount").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".buy-amount").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      const v = btn.dataset.amount;
+      buyAmount = v === "max" ? "max" : parseInt(v, 10);
+      renderShops();
     });
   });
 }
@@ -352,6 +406,7 @@ function init() {
   const loaded = load();
   buildShops();
   setupTabs();
+  setupBuyAmount();
 
   if (loaded) applyOfflineProgress();
   renderResource();
