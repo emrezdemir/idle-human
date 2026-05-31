@@ -7,8 +7,9 @@ Tarayıcıda çalışır ve **Capacitor** ile Android APK'ya paketlenir.
 ## 🎮 Nasıl Oynanır
 
 - 🧑 butonuna **dokun** ve İnsanlık Puanı kazan.
-- Puanlarınla **Üreticiler** al (İşçi, Çiftçi, Bilim İnsanı… → Yapay Zekâ);
-  bunlar saniyede otomatik puan üretir. `×1 / ×10 / ×100 / MAKS` ile toplu al.
+- Puanlarınla **Üreticiler** al — İşçi ve Çiftçi'den başlayıp Yapay Zekâ,
+  Uzay Filosu, Gezegen Kolonisi ve **Dyson Küresi**'ne kadar uzanan 12 kademe
+  (taş devri → uzay çağı). `×1 / ×10 / ×100 / MAKS` ile toplu al.
 - **Yükseltmeler** ile dokunuş gücünü veya üretimi katla.
 - **Prestij** sekmesinden yeniden doğup kalıcı **Gen** puanı kazan (her Gen
   +%10 üretim).
@@ -33,8 +34,11 @@ npm run serve          # python3 -m http.server 8000 --directory www
 | `www/style.css`         | Mobil öncelikli tasarım (karanlık tema)         |
 | `www/game.js`           | Oyun mantığı, kayıt, offline, prestij, başarım  |
 | `www/manifest.json`     | PWA manifesti                                   |
+| `www/icons/`            | Web / PWA simgeleri (üretilmiş PNG'ler)         |
+| `resources/`            | Simge & açılış kaynakları + üretici betik       |
 | `capacitor.config.json` | Capacitor / Android yapılandırması              |
 | `package.json`          | Bağımlılıklar ve yardımcı komutlar              |
+| `.github/workflows/`    | CI: otomatik APK derleme                         |
 
 ## 📱 Android APK Oluşturma (Capacitor)
 
@@ -61,8 +65,34 @@ npm run android:build  # android/app/build/outputs/apk/debug/app-debug.apk
 `capacitor.config.json` içindeki `appId` (`com.idlehuman.game`) ve `appName`
 değerlerini istediğin gibi değiştirebilirsin.
 
-> İpucu: simge ve açılış ekranı için `@capacitor/assets` paketini kullanabilir,
-> tek bir kaynak görselden tüm boyutları üretebilirsin.
+### 🎨 Simge ve Açılış Ekranı
+
+Uygulama simgesi ve açılış ekranı `resources/icon.png` (1024×1024) ve
+`resources/splash.png` (2732×2732) kaynaklarından üretilir. Bu kaynaklar
+`resources/generate_icons.py` ile (saf Python + Pillow) oluşturulmuştur —
+tasarımı değiştirmek için betiği düzenleyip tekrar çalıştırman yeterli:
+
+```bash
+pip install pillow
+python3 resources/generate_icons.py   # PNG'leri yeniden üretir
+```
+
+Native projeye (Android) işlemek için:
+
+```bash
+npm run assets   # capacitor-assets generate --assetPath resources
+```
+
+## 🤖 Sürekli Entegrasyon (CI)
+
+`.github/workflows/build.yml`, her `main` push'unda ve PR'da çalışır:
+
+1. **Web doğrulama** — `game.js` söz dizimi + JSON dosyaları kontrol edilir.
+2. **Android APK** — Capacitor projesi kurulur, simgeler işlenir ve debug APK
+   derlenir.
+
+Derlenen APK, ilgili çalışmanın **Actions → Artifacts** bölümünden
+`idle-human-debug-apk` adıyla indirilebilir.
 
 ### Alternatifler
 
@@ -78,6 +108,7 @@ değerlerini istediğin gibi değiştirebilirsin.
 - [x] Başarımlar
 - [x] Ses efektleri
 - [x] Android paketleme (Capacitor)
+- [x] Daha fazla üretici ve çağ (taş devri → uzay çağı)
+- [x] Uygulama simgesi ve açılış ekranı
+- [x] CI ile otomatik APK derleme
 - [ ] Bulut kayıt
-- [ ] Daha fazla üretici ve çağ (taş devri → uzay çağı)
-- [ ] Uygulama simgesi ve açılış ekranı
