@@ -38,10 +38,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # not: npm cache, package-lock.json gerektirir; lock dosyası
+      # tutmadığımız için cache'i kapalı bırakıyoruz.
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - uses: actions/setup-java@v4
         with:
