@@ -62,17 +62,22 @@ def radial_glow(size, color, center, radius, strength=140):
     return layer
 
 
-def draw_helix(img, cx, cy, height, width, turns=2.0, dot=0.0, line=0.0):
-    """Dikey bir DNA çift sarmalı çizer (yumuşatma için 4x supersample)."""
+def draw_helix(img, cx, cy, height, width, turns=2.5, dot=0.0, line=0.0):
+    """Dikey bir DNA çift sarmalı çizer (yumuşatma için 4x supersample).
+
+    Şeritler ince tutulur, düğümler yalnızca bağ çubuklarının uçlarına
+    konur; böylece blob yerine net bir çift sarmal görünür.
+    """
     s = 4
     w, h = img.size
     canvas = Image.new("RGBA", (w * s, h * s), (0, 0, 0, 0))
     d = ImageDraw.Draw(canvas)
     cx, cy, height, width = cx * s, cy * s, height * s, width * s
-    dot = (dot or max(6, width * 0.12)) * s
-    line = (line or max(4, width * 0.05)) * s
+    # not: width yukarıda s ile çarpıldı; dot/line'ı tekrar çarpma.
+    dot = dot * s if dot else width * 0.09
+    line = line * s if line else width * 0.05
 
-    steps = 240
+    steps = 480
     pts_a, pts_b = [], []
     for i in range(steps + 1):
         t = i / steps
@@ -83,19 +88,22 @@ def draw_helix(img, cx, cy, height, width, turns=2.0, dot=0.0, line=0.0):
         pts_a.append((xa, y))
         pts_b.append((xb, y))
 
-    # Bağ çubukları (rungs)
-    for i in range(0, steps + 1, 12):
-        a, b = pts_a[i], pts_b[i]
-        depth = (math.sin(i / steps * turns * 2 * math.pi) + 1) / 2  # 0..1
-        alpha = round(90 + 120 * depth)
-        d.line([a, b], fill=RUNG + (alpha,), width=int(line))
+    # Sarmal şeritler (önce çizilir, düğümler üstte kalsın diye)
+    d.line(pts_a, fill=STRAND_A + (255,), width=int(line), joint="curve")
+    d.line(pts_b, fill=STRAND_B + (255,), width=int(line), joint="curve")
 
-    # Sarmal şeritler
-    d.line(pts_a, fill=STRAND_A + (255,), width=int(line * 1.6), joint="curve")
-    d.line(pts_b, fill=STRAND_B + (255,), width=int(line * 1.6), joint="curve")
+    # Bağ çubukları + nükleotit düğümleri: şeritlerin en açıldığı noktalarda
+    # (faz = pi/2 + k*pi). rung_count kadar eşit aralıklı bağ.
+    rung_count = round(turns * 2) + 1
+    bonds = []
+    for r in range(rung_count):
+        t = (0.25 + r * 0.5) / turns
+        if 0 <= t <= 1:
+            bonds.append(round(t * steps))
 
-    # Nükleotit düğümleri
-    for i in range(0, steps + 1, 12):
+    for i in bonds:
+        d.line([pts_a[i], pts_b[i]], fill=RUNG + (230,), width=int(line * 0.7))
+    for i in bonds:
         for (x, y), col in ((pts_a[i], STRAND_A), (pts_b[i], STRAND_B)):
             d.ellipse([x - dot, y - dot, x + dot, y + dot], fill=col + (255,))
 
