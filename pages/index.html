@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1b1033" />
+  <title>Idle Human — İndir & Oyna</title>
+  <meta name="description" content="Bir insandan başlayıp medeniyeti büyüten ücretsiz idle/clicker oyunu. Tarayıcıda oyna veya Android APK olarak indir." />
+
+  <!-- Sosyal paylaşım -->
+  <meta property="og:title" content="🧬 Idle Human" />
+  <meta property="og:description" content="Bir insandan başlayıp medeniyeti büyüt. Ücretsiz idle/clicker." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="./game/icons/icon-512.png" />
+
+  <link rel="icon" type="image/png" sizes="512x512" href="./game/icons/icon-512.png" />
+  <link rel="apple-touch-icon" href="./game/icons/icon-180.png" />
+
+  <style>
+    :root {
+      --bg: #1b1033;
+      --bg-2: #2a1a4f;
+      --panel: #2f2150;
+      --accent: #ffd166;
+      --accent-2: #06d6a0;
+      --text: #f5f0ff;
+      --text-dim: #b9a9e0;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100%; }
+    body {
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(circle at 50% -10%, var(--bg-2), var(--bg) 70%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 64px;
+      min-height: 100vh;
+    }
+    .hero { text-align: center; max-width: 640px; width: 100%; }
+    .app-icon {
+      width: 132px; height: 132px;
+      border-radius: 30px;
+      box-shadow: 0 14px 40px rgba(108, 61, 244, 0.45);
+      margin-bottom: 22px;
+    }
+    h1 {
+      font-size: 2.6rem;
+      margin: 0 0 6px;
+      letter-spacing: 0.5px;
+    }
+    .tagline {
+      color: var(--text-dim);
+      font-size: 1.1rem;
+      margin: 0 0 32px;
+      line-height: 1.5;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 30px;
+      border-radius: 999px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.08s ease, box-shadow 0.2s ease;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: var(--accent-2); color: #002a1d; }
+    .btn-secondary { background: var(--panel); color: var(--text); }
+    .btn-emoji { font-size: 1.3rem; }
+    .note {
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      margin: 8px 0 0;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      max-width: 640px;
+      width: 100%;
+      margin-top: 44px;
+    }
+    .feature {
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      text-align: center;
+    }
+    .feature-icon { font-size: 1.8rem; display: block; margin-bottom: 8px; }
+    .feature-title { font-weight: 700; font-size: 0.95rem; }
+    .feature-desc { color: var(--text-dim); font-size: 0.8rem; margin-top: 4px; }
+
+    footer {
+      margin-top: 48px;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <img class="app-icon" src="./game/icons/icon-512.png" alt="Idle Human simgesi" />
+    <h1>🧬 Idle Human</h1>
+    <p class="tagline">
+      Bir insandan başla, medeniyeti büyüt.<br />
+      Taş devrinden uzay çağına uzanan ücretsiz idle / clicker oyunu.
+    </p>
+
+    <div class="actions">
+      <a class="btn btn-primary" href="./game/index.html">
+        <span class="btn-emoji">▶</span> Tarayıcıda Oyna
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/emrezdemir/idle-human/releases/latest/download/idle-human.apk">
+        <span class="btn-emoji">📱</span> Android APK İndir
+      </a>
+    </div>
+    <p class="note">
+      APK debug imzalıdır; kurarken Android'in "bilinmeyen kaynaklara izin ver"
+      seçeneğini onaylaman gerekebilir.
+    </p>
+
+    <div class="features">
+      <div class="feature">
+        <span class="feature-icon">👆</span>
+        <div class="feature-title">Dokun & Üret</div>
+        <div class="feature-desc">İnsanlık Puanı kazan</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🏭</span>
+        <div class="feature-title">12 Çağ</div>
+        <div class="feature-desc">İşçi → Dyson Küresi</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🧬</span>
+        <div class="feature-title">Prestij</div>
+        <div class="feature-desc">Yeniden doğ, güçlen</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🏆</span>
+        <div class="feature-title">20 Başarım</div>
+        <div class="feature-desc">+ ses efektleri</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🌙</span>
+        <div class="feature-title">Offline Kazanç</div>
+        <div class="feature-desc">Sen yokken çalışır</div>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">💾</span>
+        <div class="feature-title">Otomatik Kayıt</div>
+        <div class="feature-desc">Kaldığın yerden devam</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Açık kaynak ·
+    <a href="https://github.com/emrezdemir/idle-human">GitHub'da görüntüle</a>
+  </footer>
+</body>
+</html>

@@ -4,6 +4,13 @@ Bir insandan başlayıp medeniyeti büyüten basit bir **idle / clicker** oyunu.
 Saf HTML + CSS + JavaScript ile yazıldı, çalışmak için hiçbir bağımlılığı yok.
 Tarayıcıda çalışır ve **Capacitor** ile Android APK'ya paketlenir.
 
+### ▶ Hemen Oyna / İndir
+
+- **Tarayıcıda oyna:** https://emrezdemir.github.io/idle-human/
+- **Android APK indir:** https://github.com/emrezdemir/idle-human/releases/latest/download/idle-human.apk
+
+> Her iki bağlantı da `main`'e push'ta CI tarafından otomatik güncellenir.
+
 ## 🎮 Nasıl Oynanır
 
 - 🧑 butonuna **dokun** ve İnsanlık Puanı kazan.

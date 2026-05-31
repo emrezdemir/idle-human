@@ -12,6 +12,12 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
+# Release oluşturma ve Pages yayını için gerekli izinler
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   # Hızlı kontrol: web dosyaları sağlam mı?
   web:
@@ -67,9 +73,54 @@ jobs:
       - name: Debug APK derle
         run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
 
-      - name: APK'yı yükle
+      - name: APK'yı yeniden adlandır
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk idle-human.apk
+
+      - name: APK'yı artifact olarak yükle
         uses: actions/upload-artifact@v4
         with:
-          name: idle-human-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: idle-human-apk
+          path: idle-human.apk
           if-no-files-found: error
+
+      # Yalnızca main'e push'ta: APK'yı kalıcı public link için Release'e koy.
+      # İndirme: .../releases/latest/download/idle-human.apk
+      - name: Release'i güncelle
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: En son sürüm
+          body: |
+            `main` dalından otomatik derlenen en son debug APK.
+            Aşağıdan `idle-human.apk` dosyasını indirip kurabilirsin.
+          files: idle-human.apk
+
+  # Oynanabilir oyun + indirme sayfasını GitHub Pages'e yayınla
+  pages:
+    name: GitHub Pages
+    runs-on: ubuntu-latest
+    needs: web
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Site klasörünü hazırla
+        run: |
+          mkdir -p site
+          cp -r pages/* site/          # landing sayfası (index.html)
+          cp -r www site/game          # oynanabilir oyun -> /game/
+
+      - uses: actions/configure-pages@v5
+
+      - name: Pages artifact'ini yükle
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Pages'e dağıt
+        id: deploy
+        uses: actions/deploy-pages@v4
