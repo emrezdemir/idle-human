@@ -28,6 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - name: JS söz dizimi kontrolü
         run: node --check www/game.js
       - name: JSON doğrulama
@@ -36,19 +37,24 @@ jobs:
             node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" && echo "$f OK"
           done
 
-  # Android debug APK derle ve artifact olarak yükle
+  # Android'i derle: secret varsa imzalı AAB + APK, yoksa (PR) debug APK
   android:
-    name: Android APK
+    name: Android derleme
     runs-on: ubuntu-latest
     needs: web
+    env:
+      # Job genelinde erişilebilir olsun ki adım 'if' koşullarında kullanılabilsin
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
-      # not: npm cache, package-lock.json gerektirir; lock dosyası
-      # tutmadığımız için cache'i kapalı bırakıyoruz.
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - uses: actions/setup-java@v4
         with:
@@ -58,43 +64,70 @@ jobs:
       - name: Android SDK kur
         uses: android-actions/setup-android@v3
 
-      - name: Bağımlılıkları yükle
-        run: npm install
-
-      - name: Android platformunu ekle
-        run: npx cap add android
-
-      - name: Simge ve açılış ekranını üret
-        run: npx @capacitor/assets generate --assetPath resources --android
+      - name: Bağımlılıkları yükle (kilit dosyasından)
+        run: npm ci
 
       - name: Web varlıklarını senkronla
         run: npx cap sync android
 
-      - name: Debug APK derle
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+      # --- İmzalama: yalnızca keystore secret'ı tanımlıysa ---
+      - name: Keystore'u secret'tan çöz
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/release.keystore
+          cat > android/keystore.properties <<EOF
+          storeFile=release.keystore
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
 
-      - name: APK'yı yeniden adlandır
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk idle-human.apk
+      - name: İmzalı AAB + APK derle
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        run: |
+          cd android && chmod +x gradlew
+          ./gradlew bundleRelease assembleRelease --no-daemon
+          cp app/build/outputs/bundle/release/app-release.aab ../idle-human.aab
+          cp app/build/outputs/apk/release/app-release.apk ../idle-human.apk
 
-      - name: APK'yı artifact olarak yükle
+      # --- İmzasız geri dönüş: secret yoksa (örn. fork PR) sadece debug APK ---
+      - name: Debug APK derle (imza yoksa)
+        if: env.ANDROID_KEYSTORE_BASE64 == ''
+        run: |
+          cd android && chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk ../idle-human.apk
+
+      - name: Sırları temizle
+        if: always()
+        run: rm -f android/release.keystore android/keystore.properties
+
+      - name: Derlenen dosyaları artifact olarak yükle
         uses: actions/upload-artifact@v4
         with:
-          name: idle-human-apk
-          path: idle-human.apk
+          name: idle-human-build
+          path: |
+            idle-human.aab
+            idle-human.apk
           if-no-files-found: error
 
-      # Yalnızca main'e push'ta: APK'yı kalıcı public link için Release'e koy.
-      # İndirme: .../releases/latest/download/idle-human.apk
+      # Yalnızca main'e push'ta + imza varsa: kalıcı public link için Release'e koy.
+      # İndirme: .../releases/latest/download/idle-human.apk (yan yükleme)
+      #          .../releases/latest/download/idle-human.aab (Play Console yüklemesi)
       - name: Release'i güncelle
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && env.ANDROID_KEYSTORE_BASE64 != ''
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: En son sürüm
           body: |
-            `main` dalından otomatik derlenen en son debug APK.
-            Aşağıdan `idle-human.apk` dosyasını indirip kurabilirsin.
-          files: idle-human.apk
+            `main` dalından otomatik derlenen, imzalı en son sürüm.
+
+            - `idle-human.apk` — telefona doğrudan kurmak (yan yükleme) için
+            - `idle-human.aab` — Google Play Console'a yüklemek için
+          files: |
+            idle-human.apk
+            idle-human.aab
 
   # Oynanabilir oyun + indirme sayfasını GitHub Pages'e yayınla
   pages:
@@ -111,7 +144,7 @@ jobs:
       - name: Site klasörünü hazırla
         run: |
           mkdir -p site
-          cp -r pages/* site/          # landing sayfası (index.html)
+          cp -r pages/* site/          # landing + gizlilik sayfası
           cp -r www site/game          # oynanabilir oyun -> /game/
 
       - uses: actions/configure-pages@v5

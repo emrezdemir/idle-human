@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Idle Human</string>
+    <string name="title_activity_main">Idle Human</string>
+    <string name="package_name">com.idlehuman.game</string>
+    <string name="custom_url_scheme">com.idlehuman.game</string>
+</resources>

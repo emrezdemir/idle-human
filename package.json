@@ -5,17 +5,18 @@
   "private": true,
   "scripts": {
     "serve": "python3 -m http.server 8000 --directory www",
-    "cap:add": "cap add android",
     "cap:sync": "cap sync android",
     "cap:copy": "cap copy android",
     "cap:open": "cap open android",
-    "android:build": "cap sync android && cd android && ./gradlew assembleDebug"
+    "android:debug": "cap sync android && cd android && ./gradlew assembleDebug",
+    "android:apk": "cap sync android && cd android && ./gradlew assembleRelease",
+    "android:aab": "cap sync android && cd android && ./gradlew bundleRelease"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.1.0"
+    "@capacitor/cli": "^7.6.5"
   },
   "dependencies": {
-    "@capacitor/android": "^6.1.0",
-    "@capacitor/core": "^6.1.0"
+    "@capacitor/android": "^7.6.5",
+    "@capacitor/core": "^7.6.5"
   }
 }
