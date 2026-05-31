@@ -59,7 +59,7 @@ jobs:
         run: npx cap add android
 
       - name: Simge ve açılış ekranını üret
-        run: npx capacitor-assets generate --assetPath resources --android
+        run: npx @capacitor/assets generate --assetPath resources --android
 
       - name: Web varlıklarını senkronla
         run: npx cap sync android
