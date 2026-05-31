@@ -21,6 +21,10 @@ const GENERATORS = [
   { id: "engineer",  icon: "⚙️",   name: "Mühendis",      desc: "Makineler tasarlar",           baseCost: 1.4e6,   costGrowth: 1.15, baseRate: 1400 },
   { id: "factory",   icon: "🏭",   name: "Fabrika",       desc: "Seri üretim yapar",            baseCost: 2.0e7,   costGrowth: 1.15, baseRate: 7800 },
   { id: "ai",        icon: "🤖",   name: "Yapay Zekâ",    desc: "Her şeyi otomatikleştirir",    baseCost: 3.3e8,   costGrowth: 1.15, baseRate: 44000 },
+  { id: "robot",     icon: "🦾",   name: "Robot Ordusu",  desc: "Yorulmadan üretir",            baseCost: 5.0e9,   costGrowth: 1.15, baseRate: 260000 },
+  { id: "rocket",    icon: "🚀",   name: "Uzay Filosu",   desc: "Yıldızlara açılır",            baseCost: 7.5e10,  costGrowth: 1.15, baseRate: 1.6e6 },
+  { id: "colony",    icon: "🪐",   name: "Gezegen Kolonisi", desc: "Yeni dünyalar kurar",       baseCost: 1.0e12,  costGrowth: 1.15, baseRate: 9.0e6 },
+  { id: "dyson",     icon: "🌌",   name: "Dyson Küresi",  desc: "Bir yıldızın gücünü toplar",   baseCost: 1.5e13,  costGrowth: 1.15, baseRate: 5.5e7 },
 ];
 
 // Yükseltmeler: bir kez satın alınır, çarpan uygular.
@@ -37,6 +41,11 @@ const UPGRADES = [
   { id: "u_all_2",   icon: "💡", name: "Aydınlanma",        desc: "Tüm pasif üretim x2",        cost: 5e6,     type: "all", mult: 2 },
   { id: "u_click_3", icon: "⚡", name: "Sinir Hızlandırıcı", desc: "Dokunuş gücü x3",           cost: 2e7,     type: "click", mult: 3 },
   { id: "u_all_3",   icon: "🌐", name: "Dijital Çağ",       desc: "Tüm pasif üretim x3",        cost: 1e9,     type: "all", mult: 3 },
+  { id: "u_ai",      icon: "🧠", name: "Sinir Ağı",         desc: "Yapay Zekâ üretimi x3",      cost: 5e10,    type: "gen", targetId: "ai", mult: 3 },
+  { id: "u_all_4",   icon: "🛰️", name: "Uzay Çağı",         desc: "Tüm pasif üretim x3",        cost: 1e12,    type: "all", mult: 3 },
+  { id: "u_robot",   icon: "🔧", name: "Otomasyon",         desc: "Robot Ordusu üretimi x3",    cost: 5e12,    type: "gen", targetId: "robot", mult: 3 },
+  { id: "u_click_4", icon: "✨", name: "Kuantum Dokunuş",   desc: "Dokunuş gücü x4",            cost: 5e13,    type: "click", mult: 4 },
+  { id: "u_all_5",   icon: "🌟", name: "Tip-1 Medeniyet",   desc: "Tüm pasif üretim x4",        cost: 5e14,    type: "all", mult: 4 },
 ];
 
 // Başarımlar: koşul sağlanınca kalıcı açılır, her biri +%1 üretim verir.
@@ -54,6 +63,14 @@ const ACHIEVEMENTS = [
   { id: "a_first_upg", icon: "⬆️", name: "Gelişim", desc: "Bir yükseltme al", check: (s) => Object.keys(s.upgrades).length >= 1 },
   { id: "a_first_prestige", icon: "🧬", name: "Yeniden Doğuş", desc: "İlk kez prestij yap", check: (s) => s.prestiges >= 1 },
   { id: "a_genes_10", icon: "🧪", name: "Evrim", desc: "10 Gen biriktir", check: (s) => s.genes >= 10 },
+  { id: "a_pop_1b", icon: "🌐", name: "Küresel Güç", desc: "1B puana ulaş", check: (s) => s.population >= 1e9 },
+  { id: "a_pop_1t", icon: "🚀", name: "Yıldızlararası", desc: "1T puana ulaş", check: (s) => s.population >= 1e12 },
+  { id: "a_space", icon: "🪐", name: "Uzaya Açılış", desc: "Bir Gezegen Kolonisi kur", check: (s) => s.owned.colony >= 1 },
+  { id: "a_dyson", icon: "🌌", name: "Yıldız Avcısı", desc: "Bir Dyson Küresi inşa et", check: (s) => s.owned.dyson >= 1 },
+  { id: "a_gen_200", icon: "🏛️", name: "İmparatorluk", desc: "Toplam 200 üretici sahibi ol", check: (s) => totalOwned(s) >= 200 },
+  { id: "a_prestige_10", icon: "♾️", name: "Sonsuz Döngü", desc: "10 kez prestij yap", check: (s) => s.prestiges >= 10 },
+  { id: "a_genes_100", icon: "🧬", name: "Üstün Tür", desc: "100 Gen biriktir", check: (s) => s.genes >= 100 },
+  { id: "a_all_upgrades", icon: "🏆", name: "Mükemmeliyet", desc: "Tüm yükseltmeleri al", check: (s) => UPGRADES.every((u) => s.upgrades[u.id]) },
 ];
 
 function totalOwned(s) {
