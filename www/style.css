@@ -22,6 +22,9 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
+  /* Mobilde çift dokunuşla yakınlaştırmayı (ve 300ms tık gecikmesini) kapatır;
+     kaydırma korunur. Hızlı ardışık dokunuşlar artık zoom tetiklemez. */
+  touch-action: manipulation;
 }
 
 body {
@@ -101,6 +104,10 @@ main {
   box-shadow: var(--shadow), inset 0 0 0 4px rgba(255, 209, 102, 0.25);
   cursor: pointer;
   transition: transform 0.06s ease;
+  /* Butona çok hızlı çift dokunuşta bile zoom/seçim olmasın */
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .click-button:active {
