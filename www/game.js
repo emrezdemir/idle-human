@@ -912,6 +912,8 @@ function renderVersion() {
   if (mv) mv.textContent = label + (v.date ? " (" + v.date + ")" : "");
   const sv = document.getElementById("settingsVersion");
   if (sv) sv.textContent = label + (v.date ? " · " + v.date : "");
+  const av = document.getElementById("aboutVersion");
+  if (av) av.textContent = label + (v.date ? " (" + v.date + ")" : "");
 }
 
 // Sürüm geçmişi listesini oluşturur.
@@ -965,6 +967,10 @@ function openChangelog() {
   renderChangelog();
   show("changelogModal");
 }
+function openAbout() {
+  renderVersion();
+  show("aboutModal");
+}
 
 /* --- Başlat ------------------------------------------------------------ */
 
@@ -1003,6 +1009,11 @@ function init() {
     openSettings();
   });
   document.getElementById("menuChangelog").addEventListener("click", openChangelog);
+  document.getElementById("menuAbout").addEventListener("click", () => {
+    hide("mainMenu");
+    openAbout();
+  });
+  document.getElementById("aboutClose").addEventListener("click", () => hide("aboutModal"));
 
   // Ayarlar
   document.getElementById("settingsClose").addEventListener("click", () => hide("settingsModal"));

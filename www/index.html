@@ -152,6 +152,7 @@
         <button id="menuResume" class="primary-button">▶ Oyuna Dön</button>
         <button id="menuSettings" class="ghost-button">⚙️ Ayarlar</button>
         <button id="menuChangelog" class="ghost-button">🕘 Sürüm Geçmişi</button>
+        <button id="menuAbout" class="ghost-button">ℹ️ Hakkında</button>
       </div>
       <p id="menuVersion" class="menu-version">v—</p>
     </div>
@@ -195,6 +196,56 @@
       <p id="changelogCurrent" class="changelog-current"></p>
       <div id="changelogList" class="changelog-list"></div>
       <button id="changelogClose" class="primary-button account-close">Kapat</button>
+    </div>
+  </div>
+
+  <!-- Hakkında: bilgi + sorumluluk reddi + gizlilik özeti -->
+  <div id="aboutModal" class="modal hidden">
+    <div class="modal-card about-card">
+      <h2>ℹ️ Hakkında</h2>
+      <div class="about-scroll">
+        <section class="about-section">
+          <h3>Idle Human</h3>
+          <p>
+            Bir insandan başlayıp medeniyeti taş devrinden uzay çağına taşıyan,
+            ücretsiz ve reklamsız bir idle / clicker oyunu. Açık kaynaktır.
+          </p>
+          <p class="about-meta">Sürüm: <span id="aboutVersion">v—</span></p>
+          <p class="about-meta">
+            İletişim: <a href="mailto:emrebourne@gmail.com">emrebourne@gmail.com</a><br />
+            Kaynak kod:
+            <a href="https://github.com/emrezdemir/idle-human" target="_blank" rel="noopener">
+              github.com/emrezdemir/idle-human</a>
+          </p>
+        </section>
+
+        <section class="about-section">
+          <h3>⚠️ Sorumluluk Reddi</h3>
+          <ul>
+            <li>Oyun "olduğu gibi", hiçbir garanti olmaksızın sunulur.</li>
+            <li>Yalnızca eğlence amaçlıdır; gerçek bir tarihsel, bilimsel veya
+              ekonomik temsil değildir.</li>
+            <li>İlerlemen cihazında saklanır; uygulamayı ya da veriyi silersen
+              kaybolabilir. Veri kaybından sorumluluk kabul edilmez.</li>
+            <li>Google Play ve Android, Google LLC'nin ticari markalarıdır. Bu oyun
+              Google tarafından desteklenmez veya onaylanmaz.</li>
+          </ul>
+        </section>
+
+        <section class="about-section">
+          <h3>🔒 Gizlilik Politikası</h3>
+          <p>
+            Idle Human hiçbir kişisel veri toplamaz, sunucuya bilgi göndermez.
+            İlerlemen yalnızca cihazının yerel deposunda (localStorage) saklanır.
+            Reklam, analitik veya üçüncü taraf izleme bulunmaz.
+          </p>
+          <p class="about-meta">
+            <a href="https://emrezdemir.github.io/idle-human/privacy.html"
+              target="_blank" rel="noopener">Tam gizlilik politikasını çevrimiçi oku →</a>
+          </p>
+        </section>
+      </div>
+      <button id="aboutClose" class="primary-button account-close">Kapat</button>
     </div>
   </div>
 

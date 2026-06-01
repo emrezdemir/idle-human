@@ -10,11 +10,20 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.1.1",
+  version: "1.2.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.2.0",
+      title: "Hakkında, sorumluluk reddi ve gizlilik",
+      notes: [
+        "Menüye 'Hakkında' eklendi: oyun bilgisi, sorumluluk reddi ve gizlilik özeti.",
+        "Gizlilik, sorumluluk reddi ve hakkında sayfaları web sitesine de eklendi.",
+        "Tam gizlilik politikasına oyun içinden bağlantı.",
+      ],
+    },
     {
       version: "1.1.1",
       title: "Daha temiz arayüz",

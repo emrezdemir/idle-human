@@ -954,6 +954,50 @@ main {
   margin: 3px 0;
 }
 
+/* Hakkında penceresi */
+.about-card {
+  max-width: 400px;
+  width: 100%;
+  text-align: left;
+}
+.about-card h2 {
+  text-align: center;
+}
+.about-scroll {
+  max-height: 55vh;
+  overflow-y: auto;
+}
+.about-section {
+  margin-bottom: 16px;
+}
+.about-section h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: var(--accent);
+}
+.about-section p {
+  margin: 6px 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.about-section ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+.about-section li {
+  font-size: 0.86rem;
+  color: var(--text-dim);
+  margin: 5px 0;
+  line-height: 1.45;
+}
+.about-meta {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+.about-section a {
+  color: var(--accent-2);
+}
+
 /* Hareket azaltma tercihine saygı: animasyonları yumuşat */
 @media (prefers-reduced-motion: reduce) {
   .click-button,

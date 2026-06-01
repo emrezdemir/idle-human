@@ -20,7 +20,7 @@ idle-human/
 │   ├── generate_feature_graphic.py  # Play "feature graphic" üretir
 │   ├── generate-keystore.sh # Kullanıcının imzalama anahtarını üretmesi için
 │   └── play/                # Mağaza görselleri (feature graphic, 512 ikon)
-├── pages/                   # GitHub Pages: landing + gizlilik politikası
+├── pages/                   # GitHub Pages: landing + hakkında + sorumluluk reddi + gizlilik
 ├── memory-bank/             # BU KLASÖR — kalıcı proje hafızası
 ├── docs/                    # Ek rehberler (PLAY_GAMES.md)
 ├── STORE.md                 # Play Console'a çıkış rehberi
