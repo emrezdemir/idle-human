@@ -99,13 +99,16 @@ npx @capacitor/assets generate --assetPath resources --android  # native'e işle
 `.github/workflows/build.yml`, her `main` push'unda ve PR'da çalışır:
 
 1. **Web doğrulama** — JS söz dizimi + JSON dosyaları kontrol edilir.
-2. **Android** — `keystore` secret'ları tanımlıysa **imzalı AAB + APK** üretir ve
-   `latest` Release'e koyar; secret yoksa (fork PR) imzasız debug APK'ya düşer.
+2. **Android** — `keystore` secret'ları tanımlıysa **imzalı AAB + APK** üretip
+   `latest` Release'e koyar (Play'e yüklenebilir). Secret yoksa **imzasız test
+   APK**'sı üretip yine Release'e koyar (sadece yan yükleme/test; Play'e yüklenemez).
 3. **GitHub Pages** — oyun + indirme sayfası + gizlilik politikası yayınlanır.
 
 Kalıcı indirme bağlantıları:
 - APK: `https://github.com/emrezdemir/idle-human/releases/latest/download/idle-human.apk`
+  (her zaman güncel — imza varsa imzalı, yoksa imzasız test sürümü)
 - AAB: `https://github.com/emrezdemir/idle-human/releases/latest/download/idle-human.aab`
+  (yalnızca keystore secret'ları eklendikten sonra yayınlanır)
 
 ## 🛒 Google Play Store
 
