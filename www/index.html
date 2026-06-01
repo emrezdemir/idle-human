@@ -21,8 +21,9 @@
   <div id="app">
     <header class="topbar">
       <div class="topbar-row">
+        <button id="menuButton" class="icon-button menu-button" aria-label="Menü">☰</button>
         <h1 class="logo">🧬 Idle Human</h1>
-        <button id="accountButton" class="account-button" aria-label="Hesap">👤</button>
+        <button id="accountButton" class="icon-button account-button" aria-label="Hesap">👤</button>
       </div>
       <div class="resource">
         <span id="population" class="resource-value">0</span>
@@ -93,8 +94,13 @@
     <footer class="bottombar">
       <button id="soundButton" class="ghost-button">🔊 Ses</button>
       <button id="saveButton" class="ghost-button">💾 Kaydet</button>
-      <button id="resetButton" class="ghost-button danger">♻️ Sıfırla</button>
+      <button id="settingsButton" class="ghost-button">⚙️ Ayarlar</button>
     </footer>
+
+    <!-- Her zaman görünen küçük sürüm etiketi (dokununca geçmişi açar) -->
+    <button id="versionTag" class="version-tag" aria-label="Sürüm geçmişi">
+      sürüm yükleniyor…
+    </button>
   </div>
 
   <!-- Offline kazanç bildirimi -->
@@ -139,8 +145,66 @@
     </div>
   </div>
 
+  <!-- Ana menü -->
+  <div id="mainMenu" class="modal hidden">
+    <div class="modal-card menu-card">
+      <div class="menu-logo">🧬</div>
+      <h2 class="menu-title">Idle Human</h2>
+      <p class="menu-sub">İnsanlığı bir dokunuşla ilerlet</p>
+      <div class="menu-actions">
+        <button id="menuResume" class="primary-button">▶ Devam Et</button>
+        <button id="menuSettings" class="ghost-button">⚙️ Ayarlar</button>
+        <button id="menuChangelog" class="ghost-button">🕘 Sürüm Geçmişi</button>
+        <button id="menuAccount" class="ghost-button">👤 Hesap & Bulut</button>
+      </div>
+      <p id="menuVersion" class="menu-version">v—</p>
+    </div>
+  </div>
+
+  <!-- Ayarlar -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-card settings-card">
+      <h2>⚙️ Ayarlar</h2>
+
+      <div class="setting-row">
+        <span class="setting-label">🔊 Ses efektleri</span>
+        <button id="sfxToggle" class="switch" role="switch" aria-checked="true">
+          <span class="switch-knob"></span>
+        </button>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">🎵 Müzik</span>
+        <button id="musicToggle" class="switch" role="switch" aria-checked="true">
+          <span class="switch-knob"></span>
+        </button>
+      </div>
+
+      <hr class="prestige-sep" />
+
+      <div class="account-buttons">
+        <button id="settingsSave" class="ghost-button">💾 Şimdi Kaydet</button>
+        <button id="settingsChangelog" class="ghost-button">🕘 Sürüm Geçmişi</button>
+      </div>
+      <button id="settingsReset" class="ghost-button danger settings-reset">♻️ Oyunu Sıfırla</button>
+
+      <p id="settingsVersion" class="settings-version">v—</p>
+      <button id="settingsClose" class="primary-button account-close">Kapat</button>
+    </div>
+  </div>
+
+  <!-- Sürüm geçmişi (changelog) -->
+  <div id="changelogModal" class="modal hidden">
+    <div class="modal-card changelog-card">
+      <h2>🕘 Sürüm Geçmişi</h2>
+      <p id="changelogCurrent" class="changelog-current"></p>
+      <div id="changelogList" class="changelog-list"></div>
+      <button id="changelogClose" class="primary-button account-close">Kapat</button>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
 
+  <script src="version.js"></script>
   <script src="audio.js"></script>
   <script src="effects.js"></script>
   <script src="cloud.js"></script>

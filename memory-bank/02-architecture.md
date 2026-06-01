@@ -7,7 +7,8 @@ idle-human/
 ├── www/                     # OYUN (tarayıcı + Capacitor webDir)
 │   ├── index.html           # Arayüz iskeleti, <script> yükleme sırası
 │   ├── style.css            # Tüm stiller (mobil öncelikli, karanlık tema)
-│   ├── game.js              # Oyun mantığı: durum, ekonomi, render, kayıt
+│   ├── game.js              # Oyun mantığı: durum, ekonomi, render, kayıt, menü/ayarlar
+│   ├── version.js           # window.APP_VERSION: sürüm + build + changelog (CI damgalar)
 │   ├── audio.js             # SFX modülü — Web Audio ile prosedürel ses
 │   ├── effects.js           # Effects modülü — canvas parçacık/efekt motoru
 │   ├── cloud.js             # Cloud modülü — hesap + bulut kayıt soyutlaması
@@ -33,11 +34,21 @@ idle-human/
 Sıra önemlidir — `game.js` diğerlerine bağımlıdır:
 
 ```html
+<script src="version.js"></script>  <!-- window.APP_VERSION -->
 <script src="audio.js"></script>    <!-- window.SFX -->
 <script src="effects.js"></script>  <!-- window.Effects -->
 <script src="cloud.js"></script>    <!-- window.Cloud -->
 <script src="game.js"></script>     <!-- hepsini kullanır, init eder -->
 ```
+
+## Sürüm damgalama
+
+`version.js` yerelde `build: "dev"` taşır. CI (build.yml) hem `android` hem
+`pages` job'ında, derleme öncesi `build`'i kısa commit hash'iyle ve `date`'i
+derleme tarihiyle değiştirir. Sürüm ekranda görünür (footer etiketi, ana menü,
+ayarlar) — böylece yayınlanan build hash'i son commit'le karşılaştırılarak bir
+deploy'un gerçekten çıktığı doğrulanabilir. Yeni özellik eklenince `version`
+elle artırılır ve `changelog`'a en üste bir kayıt eklenir.
 
 > ⚠️ **Klasik script tuzağı:** Klasik `<script>` içinde top-level `const X = ...`
 > **window'a bağlanmaz**. Bu yüzden her modül sonunda açıkça `window.SFX = SFX;`

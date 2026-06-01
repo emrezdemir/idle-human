@@ -96,7 +96,8 @@ function newState() {
     owned,
     upgrades: {}, // id -> true
     unlocked: {}, // açılan başarımlar: id -> true
-    soundOn: true,
+    soundOn: true, // ses efektleri (SFX)
+    musicOn: true, // arka plan müziği
     lastSeen: Date.now(),
   };
 }
@@ -541,15 +542,52 @@ function updateSoundButton() {
   if (btn) btn.textContent = state.soundOn ? "🔊 Ses" : "🔇 Kapalı";
 }
 
+// Ses tercihlerini (efekt + müzik) ses motoruna ve arayüze uygular.
+function applyAudioPrefs() {
+  if (window.SFX) {
+    SFX.setEnabled(state.soundOn);
+    if (state.soundOn && state.musicOn) {
+      ensureAudio();
+      SFX.startMusic();
+    } else {
+      SFX.stopMusic();
+    }
+  }
+  updateSoundButton();
+  renderSettings();
+}
+
+// Ayarlar penceresindeki anahtarların görünümünü güncelle.
+function renderSettings() {
+  const sfx = document.getElementById("sfxToggle");
+  const music = document.getElementById("musicToggle");
+  if (sfx) {
+    sfx.classList.toggle("on", state.soundOn);
+    sfx.setAttribute("aria-checked", String(state.soundOn));
+  }
+  if (music) {
+    // Müzik yalnızca ses açıkken anlamlı; ses kapalıyken anahtarı sönükleştir.
+    music.classList.toggle("on", state.soundOn && state.musicOn);
+    music.setAttribute("aria-checked", String(state.soundOn && state.musicOn));
+    music.disabled = !state.soundOn;
+  }
+}
+
 function toggleSound() {
   state.soundOn = !state.soundOn;
-  updateSoundButton();
-  if (window.SFX) SFX.setEnabled(state.soundOn);
-  if (state.soundOn) {
-    ensureAudio();
-    SFX.startMusic();
-    playBuy();
+  applyAudioPrefs();
+  if (state.soundOn) playBuy();
+  save(false);
+}
+
+function toggleMusic() {
+  if (!state.soundOn) {
+    // Ses kapalıyken müzik açılamaz; kullanıcıyı yönlendir.
+    showToast("Önce ses efektlerini aç");
+    return;
   }
+  state.musicOn = !state.musicOn;
+  applyAudioPrefs();
   save(false);
 }
 
@@ -573,7 +611,7 @@ function applySaveString(saveString) {
   renderShops();
   renderResource();
   renderAchievements();
-  updateSoundButton();
+  applyAudioPrefs();
 }
 
 function openAccountModal() {
@@ -845,6 +883,84 @@ function setupBuyAmount() {
   });
 }
 
+/* --- Sürüm bilgisi & geçmişi ------------------------------------------ */
+
+// version.js yoksa (beklenmedik) güvenli varsayılan.
+function appVersion() {
+  return window.APP_VERSION || { version: "?", build: "dev", date: "", changelog: [] };
+}
+
+// Ekranda gösterilecek kısa sürüm metni, örn: "v1.1.0 · abc1234".
+function versionLabel() {
+  const v = appVersion();
+  const build = v.build && v.build !== "dev" ? " · " + v.build : " · dev";
+  return "v" + v.version + build;
+}
+
+// Sürüm etiketini ve menü/ayarlardaki sürüm satırlarını doldurur.
+function renderVersion() {
+  const v = appVersion();
+  const label = versionLabel();
+  const tag = document.getElementById("versionTag");
+  if (tag) tag.textContent = label;
+  const mv = document.getElementById("menuVersion");
+  if (mv) mv.textContent = label + (v.date ? " (" + v.date + ")" : "");
+  const sv = document.getElementById("settingsVersion");
+  if (sv) sv.textContent = label + (v.date ? " · " + v.date : "");
+}
+
+// Sürüm geçmişi listesini oluşturur.
+function renderChangelog() {
+  const v = appVersion();
+  const cur = document.getElementById("changelogCurrent");
+  if (cur) {
+    cur.textContent =
+      "Yüklü sürüm: " + versionLabel() + (v.date ? " (" + v.date + ")" : "");
+  }
+  const list = document.getElementById("changelogList");
+  if (!list) return;
+  list.innerHTML = "";
+  (v.changelog || []).forEach((entry) => {
+    const card = document.createElement("div");
+    card.className = "changelog-entry";
+    const notes = (entry.notes || [])
+      .map((n) => `<li>${n}</li>`)
+      .join("");
+    card.innerHTML = `
+      <div class="changelog-head">
+        <span class="changelog-ver">v${entry.version}</span>
+        <span class="changelog-name">${entry.title || ""}</span>
+      </div>
+      <ul class="changelog-notes">${notes}</ul>`;
+    list.appendChild(card);
+  });
+}
+
+/* --- Pencere açma/kapama (menü, ayarlar, geçmiş) ---------------------- */
+
+function show(id) {
+  const m = document.getElementById(id);
+  if (m) m.classList.remove("hidden");
+}
+function hide(id) {
+  const m = document.getElementById(id);
+  if (m) m.classList.add("hidden");
+}
+
+function openMenu() {
+  renderVersion();
+  show("mainMenu");
+}
+function openSettings() {
+  renderSettings();
+  renderVersion();
+  show("settingsModal");
+}
+function openChangelog() {
+  renderChangelog();
+  show("changelogModal");
+}
+
 /* --- Başlat ------------------------------------------------------------ */
 
 function init() {
@@ -852,8 +968,6 @@ function init() {
 
   // Görsel efekt motorunu başlat (arka plan parçacıkları her zaman çalışır)
   if (window.Effects) Effects.init();
-  // Ses tercihini uygula
-  if (window.SFX) SFX.setEnabled(state.soundOn);
 
   buildShops();
   setupTabs();
@@ -861,19 +975,46 @@ function init() {
 
   if (loaded) applyOfflineProgress();
   renderAchievements();
-  updateSoundButton();
   renderResource();
   renderCombo();
+  renderVersion();
+  // Ses + müzik tercihlerini uygula (anahtarları da senkronlar)
+  applyAudioPrefs();
 
   el.clickButton.addEventListener("click", handleClick);
   document.getElementById("saveButton").addEventListener("click", () => save(true));
-  document.getElementById("resetButton").addEventListener("click", hardReset);
   document.getElementById("prestigeButton").addEventListener("click", doPrestige);
   document.getElementById("soundButton").addEventListener("click", toggleSound);
   document.getElementById("offlineClose").addEventListener("click", () => {
     document.getElementById("offlineModal").classList.add("hidden");
     renderResource();
   });
+
+  // Ana menü
+  document.getElementById("menuButton").addEventListener("click", openMenu);
+  document.getElementById("menuResume").addEventListener("click", () => hide("mainMenu"));
+  document.getElementById("menuSettings").addEventListener("click", () => {
+    hide("mainMenu");
+    openSettings();
+  });
+  document.getElementById("menuChangelog").addEventListener("click", openChangelog);
+  document.getElementById("menuAccount").addEventListener("click", () => {
+    hide("mainMenu");
+    openAccountModal();
+  });
+
+  // Ayarlar
+  document.getElementById("settingsButton").addEventListener("click", openSettings);
+  document.getElementById("settingsClose").addEventListener("click", () => hide("settingsModal"));
+  document.getElementById("sfxToggle").addEventListener("click", toggleSound);
+  document.getElementById("musicToggle").addEventListener("click", toggleMusic);
+  document.getElementById("settingsSave").addEventListener("click", () => save(true));
+  document.getElementById("settingsChangelog").addEventListener("click", openChangelog);
+  document.getElementById("settingsReset").addEventListener("click", hardReset);
+
+  // Sürüm geçmişi
+  document.getElementById("versionTag").addEventListener("click", openChangelog);
+  document.getElementById("changelogClose").addEventListener("click", () => hide("changelogModal"));
 
   // Hesap / bulut kayıt arayüzü
   document.getElementById("accountButton").addEventListener("click", openAccountModal);
@@ -891,7 +1032,7 @@ function init() {
     "pointerdown",
     () => {
       ensureAudio();
-      if (state.soundOn && window.SFX) SFX.startMusic();
+      if (state.soundOn && state.musicOn && window.SFX) SFX.startMusic();
     },
     { once: true }
   );

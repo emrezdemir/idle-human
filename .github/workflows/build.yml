@@ -67,6 +67,12 @@ jobs:
       - name: Bağımlılıkları yükle (kilit dosyasından)
         run: npm ci
 
+      - name: Sürümü damgala (build + tarih)
+        run: |
+          export SHA=$(git rev-parse --short HEAD)
+          export DATE=$(date -u +%Y-%m-%d)
+          node -e 'const fs=require("fs"),f="www/version.js";let s=fs.readFileSync(f,"utf8");s=s.replace(/build: "dev"/,`build: "${process.env.SHA}"`).replace(/date: ""/,`date: "${process.env.DATE}"`);fs.writeFileSync(f,s);console.log("Sürüm damgalandı:",process.env.SHA,process.env.DATE)'
+
       - name: Web varlıklarını senkronla
         run: npx cap sync android
 
@@ -163,6 +169,12 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Sürümü damgala (build + tarih)
+        run: |
+          export SHA=$(git rev-parse --short HEAD)
+          export DATE=$(date -u +%Y-%m-%d)
+          node -e 'const fs=require("fs"),f="www/version.js";let s=fs.readFileSync(f,"utf8");s=s.replace(/build: "dev"/,`build: "${process.env.SHA}"`).replace(/date: ""/,`date: "${process.env.DATE}"`);fs.writeFileSync(f,s);console.log("Sürüm damgalandı:",process.env.SHA,process.env.DATE)'
 
       - name: Site klasörünü hazırla
         run: |
