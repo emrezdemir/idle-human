@@ -10,11 +10,20 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.1.0",
+  version: "1.1.1",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.1.1",
+      title: "Daha temiz arayüz",
+      notes: [
+        "Hesap & bulut artık tek yerden: sağ üstteki 👤 profili.",
+        "Alt buton çubuğu kaldırıldı; hızlı sessize-al (🔊) üst bara taşındı.",
+        "Menü sadeleşti: Oyuna Dön, Ayarlar, Sürüm Geçmişi.",
+      ],
+    },
     {
       version: "1.1.0",
       title: "Ana menü, ayarlar ve sürüm geçmişi",

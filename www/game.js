@@ -538,8 +538,13 @@ function renderAchievements() {
 }
 
 function updateSoundButton() {
+  // Üst bardaki hızlı sessize-al ikonu (ses efektleri ana anahtarı).
   const btn = document.getElementById("soundButton");
-  if (btn) btn.textContent = state.soundOn ? "🔊 Ses" : "🔇 Kapalı";
+  if (btn) {
+    btn.textContent = state.soundOn ? "🔊" : "🔇";
+    btn.setAttribute("aria-label", state.soundOn ? "Sesi kapat" : "Sesi aç");
+    btn.classList.toggle("muted", !state.soundOn);
+  }
 }
 
 // Ses tercihlerini (efekt + müzik) ses motoruna ve arayüze uygular.
@@ -982,15 +987,15 @@ function init() {
   applyAudioPrefs();
 
   el.clickButton.addEventListener("click", handleClick);
-  document.getElementById("saveButton").addEventListener("click", () => save(true));
   document.getElementById("prestigeButton").addEventListener("click", doPrestige);
+  // Üst bardaki hızlı sessize-al ikonu
   document.getElementById("soundButton").addEventListener("click", toggleSound);
   document.getElementById("offlineClose").addEventListener("click", () => {
     document.getElementById("offlineModal").classList.add("hidden");
     renderResource();
   });
 
-  // Ana menü
+  // Ana menü (☰): oyun menüsü — ayarlar + sürüm. Hesap burada DEĞİL (👤'de).
   document.getElementById("menuButton").addEventListener("click", openMenu);
   document.getElementById("menuResume").addEventListener("click", () => hide("mainMenu"));
   document.getElementById("menuSettings").addEventListener("click", () => {
@@ -998,13 +1003,8 @@ function init() {
     openSettings();
   });
   document.getElementById("menuChangelog").addEventListener("click", openChangelog);
-  document.getElementById("menuAccount").addEventListener("click", () => {
-    hide("mainMenu");
-    openAccountModal();
-  });
 
   // Ayarlar
-  document.getElementById("settingsButton").addEventListener("click", openSettings);
   document.getElementById("settingsClose").addEventListener("click", () => hide("settingsModal"));
   document.getElementById("sfxToggle").addEventListener("click", toggleSound);
   document.getElementById("musicToggle").addEventListener("click", toggleMusic);

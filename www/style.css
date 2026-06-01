@@ -396,13 +396,6 @@ main {
   box-shadow: var(--shadow), inset 0 0 0 2px rgba(6, 214, 160, 0.4);
 }
 
-/* Alt bar */
-.bottombar {
-  display: flex;
-  gap: 8px;
-  padding: 12px 0;
-}
-
 .ghost-button {
   flex: 1;
   padding: 12px;
@@ -535,11 +528,8 @@ main {
   position: relative;
 }
 
-.account-button {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+/* Üst bar yuvarlak ikon butonları (menü, ses, hesap) ortak görünüm */
+.icon-button {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -547,12 +537,28 @@ main {
   background: var(--panel);
   color: var(--text);
   font-size: 1.1rem;
+  line-height: 1;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.1s ease, background 0.2s ease;
 }
+.icon-button:active {
+  transform: scale(0.9);
+}
+.icon-button.muted {
+  opacity: 0.6;
+}
 
-.account-button:active {
-  transform: translateY(-50%) scale(0.9);
+/* Sağ üst köşedeki aksiyonlar (ses + hesap) */
+.topbar-actions {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 8px;
 }
 
 /* Tıklama sahnesi: buton + halka dalgası */
@@ -769,30 +775,23 @@ main {
    ========================================================= */
 
 /* Topbar köşe butonları (menü solda, hesap sağda) ortak görünüm */
+/* Menü butonu sol köşede; görünüm .icon-button'dan gelir */
 .menu-button {
   position: absolute;
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: var(--panel);
-  color: var(--text);
   font-size: 1.2rem;
-  cursor: pointer;
-  transition: transform 0.1s ease, background 0.2s ease;
 }
 .menu-button:active {
   transform: translateY(-50%) scale(0.9);
 }
 
-/* Her zaman görünen küçük sürüm etiketi (footer altında) */
+/* Her zaman görünen küçük sürüm etiketi (sayfanın en altında) */
 .version-tag {
   display: block;
   width: 100%;
-  margin: 2px 0 6px;
+  margin: 10px 0 6px;
   padding: 4px;
   background: none;
   border: none;

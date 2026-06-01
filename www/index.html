@@ -23,7 +23,10 @@
       <div class="topbar-row">
         <button id="menuButton" class="icon-button menu-button" aria-label="Menü">☰</button>
         <h1 class="logo">🧬 Idle Human</h1>
-        <button id="accountButton" class="icon-button account-button" aria-label="Hesap">👤</button>
+        <div class="topbar-actions">
+          <button id="soundButton" class="icon-button" aria-label="Sesi aç/kapat">🔊</button>
+          <button id="accountButton" class="icon-button" aria-label="Hesap ve bulut">👤</button>
+        </div>
       </div>
       <div class="resource">
         <span id="population" class="resource-value">0</span>
@@ -91,12 +94,6 @@
       </section>
     </main>
 
-    <footer class="bottombar">
-      <button id="soundButton" class="ghost-button">🔊 Ses</button>
-      <button id="saveButton" class="ghost-button">💾 Kaydet</button>
-      <button id="settingsButton" class="ghost-button">⚙️ Ayarlar</button>
-    </footer>
-
     <!-- Her zaman görünen küçük sürüm etiketi (dokununca geçmişi açar) -->
     <button id="versionTag" class="version-tag" aria-label="Sürüm geçmişi">
       sürüm yükleniyor…
@@ -152,10 +149,9 @@
       <h2 class="menu-title">Idle Human</h2>
       <p class="menu-sub">İnsanlığı bir dokunuşla ilerlet</p>
       <div class="menu-actions">
-        <button id="menuResume" class="primary-button">▶ Devam Et</button>
+        <button id="menuResume" class="primary-button">▶ Oyuna Dön</button>
         <button id="menuSettings" class="ghost-button">⚙️ Ayarlar</button>
         <button id="menuChangelog" class="ghost-button">🕘 Sürüm Geçmişi</button>
-        <button id="menuAccount" class="ghost-button">👤 Hesap & Bulut</button>
       </div>
       <p id="menuVersion" class="menu-version">v—</p>
     </div>
