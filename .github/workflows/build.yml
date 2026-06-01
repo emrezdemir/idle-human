@@ -111,10 +111,12 @@ jobs:
             idle-human.apk
           if-no-files-found: error
 
-      # Yalnızca main'e push'ta + imza varsa: kalıcı public link için Release'e koy.
+      # main'e push'ta kalıcı public indirme linki için Release'e koy.
       # İndirme: .../releases/latest/download/idle-human.apk (yan yükleme)
       #          .../releases/latest/download/idle-human.aab (Play Console yüklemesi)
-      - name: Release'i güncelle
+      #
+      # İmza VARSA: imzalı APK + AAB yayınlanır (Play'e yüklenebilir).
+      - name: Release'i güncelle (imzalı)
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && env.ANDROID_KEYSTORE_BASE64 != ''
         uses: softprops/action-gh-release@v2
         with:
@@ -128,6 +130,27 @@ jobs:
           files: |
             idle-human.apk
             idle-human.aab
+
+      # İmza YOKSA: imzasız test APK'sı yayınlanır ki indirme linki güncel kalsın.
+      # Bu sürüm Play'e yüklenemez; sadece yan yükleme/test içindir.
+      # Keystore secret'ları eklenince otomatik olarak imzalı sürüme yükselir.
+      - name: Release'i güncelle (imzasız test)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && env.ANDROID_KEYSTORE_BASE64 == ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: En son sürüm (imzasız test)
+          body: |
+            `main` dalından otomatik derlenen **imzasız test sürümü**.
+
+            - `idle-human.apk` — telefona yan yükleyip denemek için
+              (Android "bilinmeyen kaynak" iznine ihtiyaç duyar).
+
+            > Bu APK imzasızdır ve Google Play'e yüklenemez. Yayın için
+            > keystore secret'ları ekleyin; pipeline otomatik olarak imzalı
+            > APK + AAB üretmeye geçer (bkz. STORE.md).
+          files: |
+            idle-human.apk
 
   # Oynanabilir oyun + indirme sayfasını GitHub Pages'e yayınla
   pages:
