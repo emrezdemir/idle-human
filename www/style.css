@@ -499,3 +499,268 @@ main {
 .hidden {
   display: none !important;
 }
+
+/* =========================================================
+   Görsel zenginleştirmeler (efektler, kombo, hesap)
+   ========================================================= */
+
+/* Tam ekran efekt kanvası — oyunun arkasında, dokunmayı engellemez */
+#fxCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* #app efekt kanvasının üstünde kalsın */
+#app {
+  position: relative;
+  z-index: 1;
+}
+
+/* Üst bar: logo + hesap düğmesi aynı satırda */
+.topbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.account-button {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+
+.account-button:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+/* Tıklama sahnesi: buton + halka dalgası */
+.click-stage {
+  position: relative;
+  display: inline-block;
+}
+
+.click-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.click-ring.animate {
+  animation: ringPulse 0.5s ease-out;
+}
+
+@keyframes ringPulse {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* Tıklama butonu: parıltı + basınca "pop" */
+.click-button {
+  position: relative;
+  overflow: visible;
+  background: radial-gradient(circle at 35% 30%, var(--panel-2), var(--panel));
+  box-shadow: var(--shadow), inset 0 0 0 4px rgba(255, 209, 102, 0.25),
+    0 0 28px rgba(124, 92, 255, 0.35);
+  animation: idleGlow 3s ease-in-out infinite;
+}
+
+@keyframes idleGlow {
+  0%, 100% {
+    box-shadow: var(--shadow), inset 0 0 0 4px rgba(255, 209, 102, 0.25),
+      0 0 22px rgba(124, 92, 255, 0.3);
+  }
+  50% {
+    box-shadow: var(--shadow), inset 0 0 0 4px rgba(255, 209, 102, 0.4),
+      0 0 38px rgba(124, 92, 255, 0.55);
+  }
+}
+
+.click-button.pop {
+  animation: popClick 0.18s ease;
+}
+
+@keyframes popClick {
+  0% {
+    transform: scale(0.92);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.click-emoji {
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+  transition: transform 0.06s ease;
+}
+
+/* Kombo göstergesi */
+.combo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px auto 0;
+  padding: 6px 14px;
+  width: max-content;
+  max-width: 90%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(239, 71, 111, 0.18), rgba(255, 209, 102, 0.18));
+  border: 1px solid rgba(255, 209, 102, 0.3);
+  animation: comboPop 0.25s ease;
+}
+
+@keyframes comboPop {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.combo-flame {
+  font-size: 1.1rem;
+  animation: flameFlicker 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes flameFlicker {
+  from {
+    transform: scale(1) rotate(-4deg);
+  }
+  to {
+    transform: scale(1.15) rotate(4deg);
+  }
+}
+
+.combo-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.combo-value {
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.combo-meter {
+  position: relative;
+  width: 60px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.combo-meter > span {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent-2), var(--accent), var(--danger));
+  transition: width 0.15s ease;
+}
+
+/* Yüksek kombolu yüzen yazı daha sıcak/parlak */
+.float-text.float-hot {
+  color: var(--danger);
+  font-size: 1.6rem;
+  text-shadow: 0 0 12px rgba(255, 209, 102, 0.7);
+}
+
+/* Hesap penceresi */
+.account-card {
+  max-width: 380px;
+  width: 100%;
+  text-align: left;
+}
+
+.account-card h2 {
+  text-align: center;
+}
+
+.account-status {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  margin: 4px 0 16px;
+}
+
+.account-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.account-help {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.save-code-area {
+  width: 100%;
+  height: 70px;
+  resize: none;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--bg);
+  color: var(--text);
+  padding: 10px;
+  font-family: monospace;
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+
+.account-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.account-buttons .ghost-button {
+  flex: 1;
+}
+
+.account-close {
+  width: 100%;
+  margin-top: 16px;
+}
+
+/* Hareket azaltma tercihine saygı: animasyonları yumuşat */
+@media (prefers-reduced-motion: reduce) {
+  .click-button,
+  .combo-flame {
+    animation: none !important;
+  }
+}
