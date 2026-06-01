@@ -33,89 +33,96 @@ npm run serve          # python3 -m http.server 8000 --directory www
 # Tarayıcıda: http://localhost:8000
 ```
 
+## ✨ Öne çıkanlar
+
+- **Kombo sistemi** — hızlı ardışık dokunuşlar komboyu büyütür, dokunuş gücünü
+  %100'e kadar çarpar; ses ve efekt şiddeti komboyla artar.
+- **Görsel efektler** — arka plan parçacık alanı, tıklama patlamaları, konfeti,
+  ekran sarsıntısı, buton parıltısı ve halka dalgaları (tek `<canvas>` üzerinde).
+- **Prosedürel ses** — dosyasız Web Audio; tüm efektler çalışma anında sentezlenir
+  + kısık arka plan ambiyansı.
+- **Hesap & bulut kayıt** — taşınabilir yedek kodu (her yerde çalışır) +
+  Google Play Games entegrasyonu için hazır katman.
+- `prefers-reduced-motion` desteği — hareket azaltma tercihine saygı duyar.
+
 ## 📁 Yapı
 
 | Yol                     | Görevi                                          |
 | ----------------------- | ----------------------------------------------- |
-| `www/index.html`        | Arayüz iskeleti                                 |
-| `www/style.css`         | Mobil öncelikli tasarım (karanlık tema)         |
-| `www/game.js`           | Oyun mantığı, kayıt, offline, prestij, başarım  |
+| `www/index.html`        | Arayüz iskeleti, script yükleme sırası          |
+| `www/style.css`         | Mobil öncelikli tasarım (karanlık tema) + efektler |
+| `www/game.js`           | Oyun mantığı, kayıt, offline, prestij, başarım, kombo |
+| `www/audio.js`          | `SFX` — prosedürel ses motoru (Web Audio)       |
+| `www/effects.js`        | `Effects` — canvas parçacık/efekt motoru        |
+| `www/cloud.js`          | `Cloud` — hesap + bulut kayıt soyutlaması        |
 | `www/manifest.json`     | PWA manifesti                                   |
 | `www/icons/`            | Web / PWA simgeleri (üretilmiş PNG'ler)         |
-| `resources/`            | Simge & açılış kaynakları + üretici betik       |
-| `capacitor.config.json` | Capacitor / Android yapılandırması              |
-| `package.json`          | Bağımlılıklar ve yardımcı komutlar              |
-| `.github/workflows/`    | CI: otomatik APK derleme                         |
+| `android/`              | Capacitor native Android projesi (repoda)        |
+| `resources/`            | Simge & açılış kaynakları + üretici betikler     |
+| `memory-bank/`          | Projenin kalıcı hafızası (mimari dokümantasyonu) |
+| `docs/PLAY_GAMES.md`    | Play Games giriş & bulut kayıt kurulum rehberi   |
+| `STORE.md`              | Play Store'a çıkış rehberi                        |
+| `.github/workflows/`    | CI: web doğrulama + imzalı APK/AAB + Pages       |
 
-## 📱 Android APK Oluşturma (Capacitor)
+> 🧠 Kodun nasıl çalıştığını ve neden böyle kurulduğunu anlamak için
+> **[`memory-bank/`](memory-bank/README.md)** klasörüne bak — mimari, oyun
+> tasarımı, efekt/ses motorları ve yayın akışı orada belgelenmiştir.
 
-> Gereksinimler: Node.js, Android Studio (+ Android SDK). İlk kurulum internet
-> erişimi ister.
+## 📱 Android (Capacitor 7)
+
+Native `android/` projesi repoda tutulur. İlk kurulumdan sonra:
 
 ```bash
-# 1) Bağımlılıkları kur
-npm install
-
-# 2) Android platformunu ekle (sadece ilk seferde)
-npm run cap:add        # cap add android
-
-# 3) Web dosyalarını native projeye kopyala
-npm run cap:sync       # cap sync android
-
-# 4a) Android Studio'da aç ve oradan derle/çalıştır
-npm run cap:open
-
-# 4b) ya da komut satırından debug APK derle
-npm run android:build  # android/app/build/outputs/apk/debug/app-debug.apk
+npm ci                  # bağımlılıklar (kilit dosyasından)
+npm run cap:sync        # web -> android kopyala
+npm run android:debug   # imzasız debug APK
+npm run android:apk     # imzalı release APK (keystore.properties gerekir)
+npm run android:aab     # imzalı App Bundle (Play Store)
 ```
 
-`capacitor.config.json` içindeki `appId` (`com.idlehuman.game`) ve `appName`
-değerlerini istediğin gibi değiştirebilirsin.
+Hedef: **targetSdk 35 / minSdk 23** — güncel Play Store gereksinimleriyle uyumlu.
+Çıktılar `android/app/build/outputs/` altında.
 
 ### 🎨 Simge ve Açılış Ekranı
 
-Uygulama simgesi ve açılış ekranı `resources/icon.png` (1024×1024) ve
-`resources/splash.png` (2732×2732) kaynaklarından üretilir. Bu kaynaklar
-`resources/generate_icons.py` ile (saf Python + Pillow) oluşturulmuştur —
-tasarımı değiştirmek için betiği düzenleyip tekrar çalıştırman yeterli:
+Simge/splash `resources/generate_icons.py` (Pillow) ile üretilir; Play "feature
+graphic" için `resources/generate_feature_graphic.py`:
 
 ```bash
 pip install pillow
-python3 resources/generate_icons.py   # PNG'leri yeniden üretir
-```
-
-Native projeye (Android) işlemek için:
-
-```bash
-npm run assets   # capacitor-assets generate --assetPath resources
+python3 resources/generate_icons.py
+npx @capacitor/assets generate --assetPath resources --android  # native'e işle
 ```
 
 ## 🤖 Sürekli Entegrasyon (CI)
 
 `.github/workflows/build.yml`, her `main` push'unda ve PR'da çalışır:
 
-1. **Web doğrulama** — `game.js` söz dizimi + JSON dosyaları kontrol edilir.
-2. **Android APK** — Capacitor projesi kurulur, simgeler işlenir ve debug APK
-   derlenir.
+1. **Web doğrulama** — JS söz dizimi + JSON dosyaları kontrol edilir.
+2. **Android** — `keystore` secret'ları tanımlıysa **imzalı AAB + APK** üretir ve
+   `latest` Release'e koyar; secret yoksa (fork PR) imzasız debug APK'ya düşer.
+3. **GitHub Pages** — oyun + indirme sayfası + gizlilik politikası yayınlanır.
 
-Derlenen APK, ilgili çalışmanın **Actions → Artifacts** bölümünden
-`idle-human-debug-apk` adıyla indirilebilir.
+Kalıcı indirme bağlantıları:
+- APK: `https://github.com/emrezdemir/idle-human/releases/latest/download/idle-human.apk`
+- AAB: `https://github.com/emrezdemir/idle-human/releases/latest/download/idle-human.aab`
 
-### Alternatifler
+## 🛒 Google Play Store
 
-- **TWA** — oyunu bir URL'ye yayınlayıp
-  [Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap) ile sar.
-- **Basit WebView** — Android Studio'da boş proje açıp `www/` içeriğini
-  `assets/`'e koyarak tek bir `WebView` ile göster.
+Mağazaya çıkış: **[STORE.md](STORE.md)**. Play Games ile giriş & bulut kayıt
+kurulumu: **[docs/PLAY_GAMES.md](docs/PLAY_GAMES.md)**.
 
 ## 🗺️ Yol Haritası
 
 - [x] Toplu alım (×1 / ×10 / ×100 / MAKS) + UI cila
 - [x] Prestij / yeniden doğuş sistemi (kalıcı Gen çarpanı)
 - [x] Başarımlar
-- [x] Ses efektleri
-- [x] Android paketleme (Capacitor)
+- [x] Zengin görsel efektler + prosedürel ses + kombo sistemi
+- [x] Android paketleme (Capacitor 7, imzalı AAB/APK)
 - [x] Daha fazla üretici ve çağ (taş devri → uzay çağı)
 - [x] Uygulama simgesi ve açılış ekranı
-- [x] CI ile otomatik APK derleme
-- [ ] Bulut kayıt
+- [x] CI ile otomatik imzalı derleme + GitHub Pages
+- [x] Bulut kayıt (taşınabilir yedek kodu + Play Games hazır katmanı)
+- [ ] Play Games native eklentisini bağla (bkz. `docs/PLAY_GAMES.md`)
+
+Ayrıntılı yol haritası: [`memory-bank/08-roadmap.md`](memory-bank/08-roadmap.md).

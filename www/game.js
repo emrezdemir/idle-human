@@ -106,6 +106,58 @@ let state = newState();
 // Toplu alım miktarı: 1, 10, 100 veya "max" (kaydedilmez, UI tercihi)
 let buyAmount = 1;
 
+/* --- Kombo sistemi (UI tercihi, kaydedilmez) --------------------------
+   Hızlı ardışık tıklamalar komboyu büyütür; kombo dokunuş gücünü çarpar.
+   Tıklama arası COMBO_WINDOW'u aşarsa kombo sıfırlanır. */
+
+const COMBO_WINDOW = 1500; // ms — bu süre içinde tıklamazsan kombo düşer
+const COMBO_MAX = 50; // kombo tavanı (tıklama sayısı)
+const COMBO_BONUS_AT_MAX = 1.0; // max komboda +%100 dokunuş gücü
+
+let comboCount = 0;
+let comboLast = 0;
+let comboDecayTimer = null;
+
+// 0..1 arası kombo yoğunluğu (ses ve efekt şiddeti için).
+function comboIntensity() {
+  return Math.min(1, comboCount / COMBO_MAX);
+}
+
+// Kombodan gelen dokunuş çarpanı (1.0 .. 1+COMBO_BONUS_AT_MAX).
+function comboMultiplier() {
+  return 1 + comboIntensity() * COMBO_BONUS_AT_MAX;
+}
+
+function registerComboHit() {
+  const now = Date.now();
+  if (now - comboLast > COMBO_WINDOW) comboCount = 0;
+  comboLast = now;
+  comboCount = Math.min(COMBO_MAX, comboCount + 1);
+  renderCombo();
+  clearTimeout(comboDecayTimer);
+  comboDecayTimer = setTimeout(resetCombo, COMBO_WINDOW);
+}
+
+function resetCombo() {
+  comboCount = 0;
+  renderCombo();
+}
+
+function renderCombo() {
+  const bar = document.getElementById("comboBar");
+  if (!bar) return;
+  if (comboCount <= 1) {
+    bar.classList.add("hidden");
+    return;
+  }
+  bar.classList.remove("hidden");
+  const mult = comboMultiplier();
+  document.getElementById("comboValue").textContent =
+    "x" + mult.toFixed(2).replace(/\.00$/, "");
+  const fill = document.getElementById("comboMeterFill");
+  if (fill) fill.style.width = Math.round(comboIntensity() * 100) + "%";
+}
+
 /* --- Prestij sabitleri ------------------------------------------------ */
 
 const GENES_THRESHOLD = 1e6; // ilk gen için gereken tur kazancı
@@ -134,12 +186,18 @@ function prestigeGain() {
 
 /* --- Hesaplamalar ----------------------------------------------------- */
 
-function clickPower() {
+// Kombo dahil olmayan "temel" dokunuş gücü (UI'da gösterilen değer).
+function baseClickPower() {
   let power = 1;
   UPGRADES.forEach((u) => {
     if (u.type === "click" && state.upgrades[u.id]) power *= u.mult;
   });
   return power * globalMultiplier();
+}
+
+// Bir dokunuşun gerçek kazancı: temel güç × anlık kombo çarpanı.
+function clickPower() {
+  return baseClickPower() * comboMultiplier();
 }
 
 function generatorRate(gen) {
@@ -198,44 +256,25 @@ function fmt(n) {
   return scaled.toFixed(scaled < 10 ? 2 : scaled < 100 ? 1 : 0) + SUFFIXES[tier];
 }
 
-/* --- Ses (Web Audio API, dosyasız) ------------------------------------ */
-
-let audioCtx = null;
+/* --- Ses köprüsü ------------------------------------------------------
+   Gerçek ses sentezi audio.js içindeki Audio modülünde. Buradaki ince
+   sarmalayıcılar yalnızca "ses açık mı?" kontrolünü ve geriye dönük
+   uyumluluğu sağlar. */
 
 function ensureAudio() {
-  if (!audioCtx) {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (Ctx) audioCtx = new Ctx();
-  }
-  // Tarayıcılar kullanıcı etkileşimine kadar AudioContext'i askıya alabilir
-  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
-}
-
-function playTone(freq, duration, type, volume) {
-  if (!state.soundOn || !audioCtx) return;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = type || "sine";
-  osc.frequency.value = freq;
-  const now = audioCtx.currentTime;
-  gain.gain.setValueAtTime(volume || 0.1, now);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-  osc.connect(gain).connect(audioCtx.destination);
-  osc.start(now);
-  osc.stop(now + duration);
+  if (window.SFX) SFX.ensure();
 }
 
 function playClick() {
-  playTone(440 + Math.random() * 60, 0.08, "triangle", 0.08);
+  if (state.soundOn && window.SFX) SFX.click(comboIntensity());
 }
 
 function playBuy() {
-  playTone(523, 0.1, "square", 0.06);
-  setTimeout(() => playTone(784, 0.12, "square", 0.06), 70);
+  if (state.soundOn && window.SFX) SFX.buy();
 }
 
 function playAchievement() {
-  [523, 659, 784].forEach((f, i) => setTimeout(() => playTone(f, 0.15, "sine", 0.1), i * 90));
+  if (state.soundOn && window.SFX) SFX.achievement();
 }
 
 /* --- DOM referansları -------------------------------------------------- */
@@ -294,14 +333,20 @@ function doPrestige() {
   renderPrestige();
   save(false);
   showToast(`🧬 Yeniden doğdun! +${fmt(gain)} Gen`);
+  if (state.soundOn && window.SFX) SFX.prestige();
+  if (window.Effects) {
+    Effects.confetti({ count: 140 });
+    Effects.screenShake(10);
+  }
 }
 
 function buyUpgrade(up) {
   if (state.upgrades[up.id] || state.population < up.cost) return;
   state.population -= up.cost;
   state.upgrades[up.id] = true;
-  playBuy();
+  if (state.soundOn && window.SFX) SFX.upgrade();
   showToast(`${up.icon} ${up.name} alındı!`);
+  if (window.Effects) Effects.confetti({ count: 30 });
   renderShops();
   renderResource();
 }
@@ -315,6 +360,10 @@ function checkAchievements() {
       changed = true;
       playAchievement();
       showToast(`🏆 Başarım: ${a.name}`);
+      if (window.Effects) {
+        Effects.confetti({ count: 60 });
+        Effects.screenShake(4);
+      }
     }
   });
   if (changed) renderAchievements();
@@ -324,21 +373,59 @@ function checkAchievements() {
 
 function handleClick(evt) {
   ensureAudio();
+  registerComboHit();
   const gain = clickPower();
   state.population += gain;
   state.totalEarned += gain;
   state.runEarned += gain;
   state.clicks++;
   playClick();
-  spawnFloatText(evt, "+" + fmt(gain));
+
+  // Tıklama konumu (fare ya da dokunma)
+  const x = evt.clientX || (evt.touches && evt.touches[0] && evt.touches[0].clientX) ||
+    window.innerWidth / 2;
+  const y = evt.clientY || (evt.touches && evt.touches[0] && evt.touches[0].clientY) ||
+    window.innerHeight / 2;
+
+  spawnFloatText(x, y, "+" + fmt(gain));
+  triggerClickFx(x, y);
   renderResource();
 }
 
-function spawnFloatText(evt, text) {
-  const x = evt.clientX || window.innerWidth / 2;
-  const y = evt.clientY || window.innerHeight / 2;
+// Görsel geri bildirim: buton zıplaması, halka dalgası, parçacık patlaması.
+function triggerClickFx(x, y) {
+  const intensity = comboIntensity();
+
+  // Parçacık patlaması (kombo arttıkça daha güçlü ve renkli)
+  if (window.Effects) {
+    Effects.burst(x, y, {
+      count: 8 + Math.round(intensity * 10),
+      power: 1 + intensity,
+    });
+    if (intensity >= 0.99) Effects.screenShake(5); // max komboda hafif sarsıntı
+  }
+
+  // Tıklama butonuna kısa "pop" animasyonu
+  const btn = el.clickButton;
+  if (btn) {
+    btn.classList.remove("pop");
+    void btn.offsetWidth; // reflow ile animasyonu yeniden başlat
+    btn.classList.add("pop");
+  }
+
+  // Halka dalgası
+  const ring = document.getElementById("clickRing");
+  if (ring) {
+    ring.classList.remove("animate");
+    void ring.offsetWidth;
+    ring.classList.add("animate");
+  }
+}
+
+function spawnFloatText(x, y, text) {
   const span = document.createElement("span");
   span.className = "float-text";
+  if (comboIntensity() > 0.6) span.classList.add("float-hot");
   span.textContent = text;
   span.style.left = x + "px";
   span.style.top = y + "px";
@@ -457,17 +544,148 @@ function updateSoundButton() {
 function toggleSound() {
   state.soundOn = !state.soundOn;
   updateSoundButton();
+  if (window.SFX) SFX.setEnabled(state.soundOn);
   if (state.soundOn) {
     ensureAudio();
+    SFX.startMusic();
     playBuy();
   }
   save(false);
 }
 
+/* --- Hesap & bulut kayıt arayüzü -------------------------------------- */
+
+// Mevcut tüm kaydı tek bir metne (yedek kodu) dönüştürür.
+function currentSaveString() {
+  state.lastSeen = Date.now();
+  return JSON.stringify(state);
+}
+
+// Bir yedek kaydı/metni uygula (geri yükleme).
+function applySaveString(saveString) {
+  const data = JSON.parse(saveString);
+  if (!data || typeof data !== "object") throw new Error("geçersiz veri");
+  state = Object.assign(newState(), data);
+  GENERATORS.forEach((g) => {
+    if (typeof state.owned[g.id] !== "number") state.owned[g.id] = 0;
+  });
+  save(false);
+  renderShops();
+  renderResource();
+  renderAchievements();
+  updateSoundButton();
+}
+
+function openAccountModal() {
+  // Yedek kodunu hazırla
+  const codeArea = document.getElementById("saveCodeArea");
+  if (codeArea) codeArea.value = Cloud.encodeCode(currentSaveString());
+
+  // Play Games bölümü yalnızca eklenti varsa görünür
+  const playSection = document.getElementById("playSection");
+  if (playSection) {
+    playSection.classList.toggle("hidden", !Cloud.isPlayAvailable());
+  }
+  refreshAccountStatus();
+  document.getElementById("accountModal").classList.remove("hidden");
+}
+
+function refreshAccountStatus() {
+  const status = document.getElementById("accountStatus");
+  const user = Cloud.currentUser();
+  const syncBtn = document.getElementById("playSyncButton");
+  const outBtn = document.getElementById("playSignOutButton");
+  const inBtn = document.getElementById("playSignInButton");
+  if (user) {
+    if (status) status.textContent = `Giriş yapıldı: ${user} · Bulut kayıt etkin.`;
+    syncBtn && syncBtn.classList.remove("hidden");
+    outBtn && outBtn.classList.remove("hidden");
+    inBtn && inBtn.classList.add("hidden");
+  } else {
+    if (status) {
+      status.textContent = Cloud.isPlayAvailable()
+        ? "Google Play ile giriş yaparak ilerlemeni buluta yedekleyebilirsin."
+        : "Yerel kayıt kullanılıyor. İlerlemeni taşımak için yedek kodunu kullan.";
+    }
+    syncBtn && syncBtn.classList.add("hidden");
+    outBtn && outBtn.classList.add("hidden");
+    inBtn && inBtn.classList.remove("hidden");
+  }
+}
+
+async function handlePlaySignIn() {
+  showToast("⏳ Giriş yapılıyor…");
+  const res = await Cloud.signIn();
+  if (res.ok) {
+    showToast(`✅ Hoş geldin, ${res.name}`);
+    refreshAccountStatus();
+  } else if (res.reason === "unavailable") {
+    showToast("Play Games bu sürümde kullanılamıyor");
+  } else {
+    showToast("Giriş iptal edildi");
+  }
+}
+
+async function handlePlaySignOut() {
+  await Cloud.signOut();
+  refreshAccountStatus();
+  showToast("Çıkış yapıldı");
+}
+
+// Buluta yedekle, sonra buluttaki daha güçlü kaydı geri getirmeyi öner.
+async function handlePlaySync() {
+  showToast("☁️ Bulutla eşitleniyor…");
+  const up = await Cloud.uploadToPlay(currentSaveString());
+  if (!up.ok) {
+    showToast("Buluta yazılamadı");
+    return;
+  }
+  showToast("✅ Bulut kaydı güncellendi");
+}
+
+function copySaveCode() {
+  const codeArea = document.getElementById("saveCodeArea");
+  if (!codeArea) return;
+  codeArea.select();
+  let ok = false;
+  try {
+    ok = document.execCommand("copy");
+  } catch (e) {
+    ok = false;
+  }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(codeArea.value).then(
+      () => showToast("📋 Kod kopyalandı"),
+      () => showToast(ok ? "📋 Kod kopyalandı" : "Kopyalanamadı, elle seç")
+    );
+  } else {
+    showToast(ok ? "📋 Kod kopyalandı" : "Kopyalanamadı, elle seç");
+  }
+}
+
+function restoreSaveCode() {
+  const codeArea = document.getElementById("saveCodeArea");
+  if (!codeArea) return;
+  const code = prompt("Yedek kodunu yapıştır:");
+  if (!code) return;
+  try {
+    const saveString = Cloud.decodeCode(code);
+    if (!confirm("Mevcut ilerlemenin üzerine bu kayıt yazılacak. Devam edilsin mi?")) {
+      return;
+    }
+    applySaveString(saveString);
+    showToast("📥 İlerleme geri yüklendi");
+    codeArea.value = Cloud.encodeCode(currentSaveString());
+  } catch (e) {
+    showToast("⚠️ Geçersiz kod");
+  }
+}
+
 function renderResource() {
   el.population.textContent = fmt(state.population);
   el.perSecond.textContent = "+" + fmt(totalPerSecond()) + " / sn";
-  el.clickPower.textContent = fmt(clickPower());
+  // Gösterilen dokunuş gücü kombosuz "temel" değerdir; kombo ayrı gösterilir.
+  el.clickPower.textContent = fmt(baseClickPower());
   // Mağaza butonlarının erişilebilirlik durumunu güncelle (ucuz işlem)
   refreshAffordability();
   renderPrestige();
@@ -631,6 +849,12 @@ function setupBuyAmount() {
 
 function init() {
   const loaded = load();
+
+  // Görsel efekt motorunu başlat (arka plan parçacıkları her zaman çalışır)
+  if (window.Effects) Effects.init();
+  // Ses tercihini uygula
+  if (window.SFX) SFX.setEnabled(state.soundOn);
+
   buildShops();
   setupTabs();
   setupBuyAmount();
@@ -639,6 +863,7 @@ function init() {
   renderAchievements();
   updateSoundButton();
   renderResource();
+  renderCombo();
 
   el.clickButton.addEventListener("click", handleClick);
   document.getElementById("saveButton").addEventListener("click", () => save(true));
@@ -649,6 +874,27 @@ function init() {
     document.getElementById("offlineModal").classList.add("hidden");
     renderResource();
   });
+
+  // Hesap / bulut kayıt arayüzü
+  document.getElementById("accountButton").addEventListener("click", openAccountModal);
+  document.getElementById("accountClose").addEventListener("click", () => {
+    document.getElementById("accountModal").classList.add("hidden");
+  });
+  document.getElementById("playSignInButton").addEventListener("click", handlePlaySignIn);
+  document.getElementById("playSignOutButton").addEventListener("click", handlePlaySignOut);
+  document.getElementById("playSyncButton").addEventListener("click", handlePlaySync);
+  document.getElementById("copyCodeButton").addEventListener("click", copySaveCode);
+  document.getElementById("restoreCodeButton").addEventListener("click", restoreSaveCode);
+
+  // İlk kullanıcı etkileşiminde sesi/müziği aç (tarayıcı politikası gereği)
+  document.body.addEventListener(
+    "pointerdown",
+    () => {
+      ensureAudio();
+      if (state.soundOn && window.SFX) SFX.startMusic();
+    },
+    { once: true }
+  );
 
   lastTick = Date.now();
   setInterval(gameLoop, TICK_MS);

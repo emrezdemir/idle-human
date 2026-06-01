@@ -15,9 +15,15 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Görsel efekt katmanı (arka plan parçacıkları, patlamalar, konfeti) -->
+  <canvas id="fxCanvas" aria-hidden="true"></canvas>
+
   <div id="app">
     <header class="topbar">
-      <h1 class="logo">🧬 Idle Human</h1>
+      <div class="topbar-row">
+        <h1 class="logo">🧬 Idle Human</h1>
+        <button id="accountButton" class="account-button" aria-label="Hesap">👤</button>
+      </div>
       <div class="resource">
         <span id="population" class="resource-value">0</span>
         <span class="resource-label">İnsanlık Puanı</span>
@@ -28,11 +34,20 @@
     <main>
       <!-- Tıklama alanı -->
       <section class="clicker">
-        <button id="clickButton" class="click-button" aria-label="Üret">
-          <span class="click-emoji">🧑</span>
-        </button>
+        <div class="click-stage">
+          <div id="clickRing" class="click-ring"></div>
+          <button id="clickButton" class="click-button" aria-label="Üret">
+            <span class="click-emoji">🧑</span>
+          </button>
+        </div>
         <p class="click-hint">Dokun ve insanlığı ilerlet</p>
         <p class="click-power">Dokunuş başına: <strong id="clickPower">1</strong></p>
+        <div id="comboBar" class="combo-bar hidden">
+          <span class="combo-flame">🔥</span>
+          <span class="combo-label">Kombo</span>
+          <span id="comboValue" class="combo-value">x1</span>
+          <span id="comboMeter" class="combo-meter"><span id="comboMeterFill"></span></span>
+        </div>
       </section>
 
       <!-- Sekmeler -->
@@ -93,8 +108,42 @@
     </div>
   </div>
 
+  <!-- Hesap / bulut kayıt penceresi -->
+  <div id="accountModal" class="modal hidden">
+    <div class="modal-card account-card">
+      <h2>👤 Hesap & Bulut Kayıt</h2>
+      <p id="accountStatus" class="account-status">Yerel kayıt kullanılıyor.</p>
+
+      <div id="playSection" class="account-section hidden">
+        <button id="playSignInButton" class="primary-button">🎮 Google Play ile Giriş</button>
+        <button id="playSyncButton" class="ghost-button hidden">☁️ Buluta Yedekle / Geri Yükle</button>
+        <button id="playSignOutButton" class="ghost-button hidden">Çıkış Yap</button>
+      </div>
+
+      <hr class="prestige-sep" />
+
+      <div class="account-section">
+        <p class="account-help">
+          Taşınabilir yedek kodu: ilerlemeni başka bir cihaza taşımak için
+          aşağıdaki kodu kopyala. Geri yüklemek için kodu yapıştırıp "Geri Yükle"ye bas.
+        </p>
+        <textarea id="saveCodeArea" class="save-code-area" readonly
+          placeholder="Kod burada görünecek"></textarea>
+        <div class="account-buttons">
+          <button id="copyCodeButton" class="ghost-button">📋 Kopyala</button>
+          <button id="restoreCodeButton" class="ghost-button">📥 Geri Yükle</button>
+        </div>
+      </div>
+
+      <button id="accountClose" class="primary-button account-close">Kapat</button>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
 
+  <script src="audio.js"></script>
+  <script src="effects.js"></script>
+  <script src="cloud.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
