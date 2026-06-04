@@ -587,10 +587,17 @@ function renderAchievements() {
 
 /* --- Çağ arayüzü ------------------------------------------------------ */
 
+// Bir çağın görseli: özel SVG figürü (yoksa emoji yedeği).
+function eraArt(i) {
+  const era = ERAS[i];
+  if (window.ERA_ART && window.ERA_ART[era.id]) return window.ERA_ART[era.id];
+  return era.icon; // güvenli yedek
+}
+
 // Tıklanan avatarı mevcut çağa göre günceller.
 function updateAvatar() {
   const emoji = document.getElementById("clickEmoji");
-  if (emoji) emoji.textContent = ERAS[state.era].icon;
+  if (emoji) emoji.innerHTML = eraArt(state.era);
 }
 
 // Arka plan tonunu çağa göre yumuşakça değiştirir.
@@ -605,7 +612,7 @@ function renderEra() {
   const nameEl = document.getElementById("eraName");
   const iconEl = document.getElementById("eraIcon");
   if (nameEl) nameEl.textContent = era.name;
-  if (iconEl) iconEl.textContent = era.icon;
+  if (iconEl) iconEl.innerHTML = eraArt(state.era);
 
   const next = ERAS[state.era + 1];
   const nextEl = document.getElementById("eraNext");
@@ -642,7 +649,7 @@ function checkEra() {
 
 function showEraPopup(idx) {
   const era = ERAS[idx];
-  document.getElementById("eraModalIcon").textContent = era.icon;
+  document.getElementById("eraModalIcon").innerHTML = eraArt(idx);
   document.getElementById("eraModalName").textContent = era.name;
   document.getElementById("eraModalStory").textContent = era.story;
   document.getElementById("eraModalBonus").textContent =
@@ -664,7 +671,7 @@ function openEras() {
     row.className = "era-row" + (reached ? " reached" : " locked") + (current ? " current" : "");
     const bonus = i === 0 ? "başlangıç" : "+%" + Math.round((era.mult - 1) * 100) + " üretim";
     row.innerHTML = `
-      <span class="era-row-icon">${reached ? era.icon : "🔒"}</span>
+      <span class="era-row-icon">${reached ? eraArt(i) : "🔒"}</span>
       <span class="era-row-body">
         <span class="era-row-name">${era.name}${current ? ' <span class="era-row-tag">şu an</span>' : ""}</span>
         <span class="era-row-desc">${reached ? era.story : "Aç: " + fmt(era.threshold) + " toplam kazanç"}</span>

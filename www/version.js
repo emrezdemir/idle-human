@@ -10,11 +10,20 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.3.0",
+  version: "1.4.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.4.0",
+      title: "Özel çağ figürleri + PixiJS",
+      notes: [
+        "Çağ emojileri yerine tek stilde özel SVG figür seti (avatar evrimi).",
+        "Efekt motoru PixiJS (WebGL) ile yenilendi; daha akıcı parçacık/konfeti.",
+        "WebGL yoksa otomatik olarak canvas motoruna güvenli geri dönüş.",
+      ],
+    },
     {
       version: "1.3.0",
       title: "Çağ & evrim sistemi",

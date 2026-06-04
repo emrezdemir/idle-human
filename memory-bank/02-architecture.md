@@ -7,11 +7,14 @@ idle-human/
 ├── www/                     # OYUN (tarayıcı + Capacitor webDir)
 │   ├── index.html           # Arayüz iskeleti, <script> yükleme sırası
 │   ├── style.css            # Tüm stiller (mobil öncelikli, karanlık tema)
-│   ├── game.js              # Oyun mantığı: durum, ekonomi, render, kayıt, menü/ayarlar
+│   ├── game.js              # Oyun mantığı: durum, ekonomi, çağlar, render, kayıt, menü
 │   ├── version.js           # window.APP_VERSION: sürüm + build + changelog (CI damgalar)
+│   ├── eras-art.js          # window.ERA_ART: çağlara özel SVG figürler (avatar evrimi)
 │   ├── audio.js             # SFX modülü — Web Audio ile prosedürel ses
-│   ├── effects.js           # Effects modülü — canvas parçacık/efekt motoru
+│   ├── effects.js           # Effects modülü — canvas parçacık/efekt motoru (yedek)
+│   ├── effects-pixi.js      # Pixi/WebGL efekt motoru; varsa Effects'i değiştirir
 │   ├── cloud.js             # Cloud modülü — hesap + bulut kayıt soyutlaması
+│   ├── vendor/pixi.min.js   # PixiJS v7 (UMD, vendor'lanmış — offline APK için)
 │   ├── manifest.json        # PWA manifesti
 │   └── icons/               # Web/PWA simgeleri
 ├── android/                 # Capacitor native Android projesi (repoda)
@@ -34,12 +37,19 @@ idle-human/
 Sıra önemlidir — `game.js` diğerlerine bağımlıdır:
 
 ```html
-<script src="version.js"></script>  <!-- window.APP_VERSION -->
-<script src="audio.js"></script>    <!-- window.SFX -->
-<script src="effects.js"></script>  <!-- window.Effects -->
-<script src="cloud.js"></script>    <!-- window.Cloud -->
-<script src="game.js"></script>     <!-- hepsini kullanır, init eder -->
+<script src="vendor/pixi.min.js"></script> <!-- window.PIXI (UMD) -->
+<script src="version.js"></script>   <!-- window.APP_VERSION -->
+<script src="eras-art.js"></script>  <!-- window.ERA_ART (SVG figürler) -->
+<script src="audio.js"></script>     <!-- window.SFX -->
+<script src="effects.js"></script>   <!-- window.Effects (canvas yedek) -->
+<script src="effects-pixi.js"></script> <!-- WebGL varsa Effects'i Pixi ile değiştirir -->
+<script src="cloud.js"></script>     <!-- window.Cloud -->
+<script src="game.js"></script>      <!-- hepsini kullanır, init eder -->
 ```
+
+`effects-pixi.js`, `window.PIXI` ve WebGL varsa `window.Effects`'i Pixi motoruyla
+değiştirir; yoksa dokunmaz ve `effects.js` (canvas) yürürlükte kalır. İkisi de
+aynı API'yi sunar: `init, burst, confetti, screenShake`.
 
 ## Sürüm damgalama
 
