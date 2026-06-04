@@ -10,11 +10,20 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.7.0",
+  version: "1.9.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.9.0",
+      title: "2D mekan + gerçek karakter (3D kaldırıldı)",
+      notes: [
+        "Kötü görünen prosedürel 3D sahne kaldırıldı (Three.js çıkarıldı, ~600KB daha hafif).",
+        "Çağa özel CSS/SVG 2D mekan: gökyüzü, katmanlı manzara, zemin, hafif parallax.",
+        "Karakter artık portrenin arka planı kırpılmış hâli (rozet değil); nefes alır, dokununca squash.",
+      ],
+    },
     {
       version: "1.8.0",
       title: "Etkileşim: konuşan karakter + sürpriz turbo",

@@ -10,14 +10,13 @@ idle-human/
 │   ├── game.js              # Oyun mantığı: durum, ekonomi, çağlar, render, kayıt, menü
 │   ├── version.js           # window.APP_VERSION: sürüm + build + changelog (CI damgalar)
 │   ├── eras-art.js          # window.ERA_ART: çağlara özel SVG figürler (avatar yedeği)
-│   ├── avatar3d.js          # window.Avatar3D: Three.js prosedürel 3D çağ sahnesi (mekan + karakter)
+│   ├── scene2d.js           # window.Scene2D: CSS/SVG 2D çağ sahnesi + portre-kırpma karakter
 │   ├── assets/characters/   # Kullanıcının ekleyeceği 2D yüz görselleri (CC0/kendi)
 │   ├── audio.js             # SFX modülü — Web Audio ile prosedürel ses
 │   ├── effects.js           # Effects modülü — canvas parçacık/efekt motoru (yedek)
 │   ├── effects-pixi.js      # Pixi/WebGL efekt motoru; varsa Effects'i değiştirir
 │   ├── cloud.js             # Cloud modülü — hesap + bulut kayıt soyutlaması
 │   ├── vendor/pixi.min.js   # PixiJS v7 (UMD) — fullscreen efekt motoru (offline)
-│   ├── vendor/three.min.js  # Three.js r149 (UMD) — 3D avatar (offline)
 │   ├── manifest.json        # PWA manifesti
 │   └── icons/               # Web/PWA simgeleri
 ├── android/                 # Capacitor native Android projesi (repoda)
@@ -41,10 +40,9 @@ Sıra önemlidir — `game.js` diğerlerine bağımlıdır:
 
 ```html
 <script src="vendor/pixi.min.js"></script>  <!-- window.PIXI (UMD) -->
-<script src="vendor/three.min.js"></script> <!-- window.THREE (UMD) -->
 <script src="version.js"></script>   <!-- window.APP_VERSION -->
 <script src="eras-art.js"></script>  <!-- window.ERA_ART (SVG figürler) -->
-<script src="avatar3d.js"></script>  <!-- window.Avatar3D (Three.js 3D avatar) -->
+<script src="scene2d.js"></script>   <!-- window.Scene2D (CSS/SVG 2D sahne) -->
 <script src="audio.js"></script>     <!-- window.SFX -->
 <script src="effects.js"></script>   <!-- window.Effects (canvas yedek) -->
 <script src="effects-pixi.js"></script> <!-- WebGL varsa Effects'i Pixi ile değiştirir -->
@@ -55,9 +53,11 @@ Sıra önemlidir — `game.js` diğerlerine bağımlıdır:
 Görsel katmanlar ve güvenli geri dönüşler:
 - `effects-pixi.js`: WebGL varsa `window.Effects`'i Pixi motoruyla değiştirir;
   yoksa `effects.js` (canvas) kalır. İkisi de aynı API: `init, burst, confetti, screenShake`.
-- `avatar3d.js`: WebGL varsa tık-avatarını Three.js 3D figürüyle değiştirir
-  (`game.js`'te `avatar3dActive`); yoksa `eras-art.js` SVG figürü kullanılır.
-- İki WebGL bağlamı (Pixi tam-ekran fx + Three avatar) aynı anda çalışır.
+- `scene2d.js`: çağ mekanını (CSS/SVG gökyüzü + manzara + zemin) ve karakteri
+  (portrenin flood-fill ile kırpılmış hâli) kurar; tık alanı `#scene2d`'dir
+  (`game.js`'te `scene2dActive`). Saf DOM olduğu için her ortamda çalışır;
+  Scene2D yoksa `eras-art.js` SVG figürlü 2D buton yedeğine düşer.
+- Önceki Three.js 3D sahne kötü göründüğü için kaldırıldı (v1.9.0).
 
 ## Sürüm damgalama
 

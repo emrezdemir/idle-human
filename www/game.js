@@ -151,8 +151,8 @@ let state = newState();
 // Toplu alım miktarı: 1, 10, 100 veya "max" (kaydedilmez, UI tercihi)
 let buyAmount = 1;
 
-// 3D avatar (Three.js) devreye girdiyse true; değilse SVG avatar kullanılır.
-let avatar3dActive = false;
+// 2D çağ sahnesi (Scene2D) devreye girdiyse true; değilse 2D buton yedeği.
+let scene2dActive = false;
 
 /* --- Kombo sistemi (UI tercihi, kaydedilmez) --------------------------
    Hızlı ardışık tıklamalar komboyu büyütür; kombo dokunuş gücünü çarpar.
@@ -458,7 +458,7 @@ function triggerClickFx(x, y) {
   const intensity = comboIntensity();
 
   // 3D avatar etkinse zıplat (squash & stretch)
-  if (avatar3dActive && window.Avatar3D) window.Avatar3D.bounce();
+  if (scene2dActive && window.Scene2D) window.Scene2D.tap();
 
   // Parçacık patlaması (kombo arttıkça daha güçlü ve renkli)
   if (window.Effects) {
@@ -609,11 +609,11 @@ function eraArt(i) {
   return era.icon; // güvenli yedek
 }
 
-// Tıklanan avatarı mevcut çağa göre günceller.
-// 3D avatar etkinse onu güncelle; değilse SVG figürünü göster.
+// Tıklanan karakteri mevcut çağa göre günceller.
+// 2D sahne etkinse onu güncelle; değilse SVG figürünü (yedek buton) göster.
 function updateAvatar() {
-  if (avatar3dActive && window.Avatar3D) {
-    window.Avatar3D.setEra(state.era);
+  if (scene2dActive && window.Scene2D) {
+    window.Scene2D.setEra(state.era);
     return;
   }
   const emoji = document.getElementById("clickEmoji");
@@ -1205,7 +1205,7 @@ function turboActive() { return Date.now() < turboUntil; }
 
 // Aktif tık hedefinin (3D sahne ya da buton) ekran merkezini döndürür.
 function clickCenter() {
-  const elx = avatar3dActive ? document.getElementById("stage3d") : document.getElementById("clickButton");
+  const elx = scene2dActive ? document.getElementById("scene2d") : document.getElementById("clickButton");
   if (elx) { const r = elx.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
   return { x: window.innerWidth / 2, y: window.innerHeight / 3 };
 }
@@ -1257,15 +1257,11 @@ function init() {
   sanitizeEra();
   updateAvatar();
   applyEraTheme();
-  // WebGL varsa tık alanını 3D çağ sahnesine yükselt (Three.js); yoksa 2D'de kal.
-  if (window.Avatar3D) {
-    const stage = document.getElementById("stage3d");
-    avatar3dActive = window.Avatar3D.tryMount(stage, state.era);
-    if (avatar3dActive) {
-      document.getElementById("clickStage2d").classList.add("hidden");
-      stage.classList.remove("hidden");
-      stage.addEventListener("click", handleClick);
-    }
+  // 2D çağ sahnesini kur (saf CSS/SVG; her ortamda çalışır). Tık alanı odur.
+  if (window.Scene2D) {
+    const stage = document.getElementById("scene2d");
+    scene2dActive = window.Scene2D.mount(stage, state.era);
+    if (scene2dActive) stage.addEventListener("click", handleClick);
   }
 
   if (loaded) applyOfflineProgress();

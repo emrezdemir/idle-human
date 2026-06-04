@@ -184,24 +184,78 @@ main {
   pointer-events: none;
 }
 
-/* 3D çağ sahnesi (mekan) — tıklanabilir alan */
-.stage3d {
+/* 2D çağ sahnesi (mekan) — gökyüzü + manzara + zemin + karakter */
+.scene2d {
+  position: relative;
   width: 100%;
-  height: 220px;
+  height: 240px;
   margin: 4px 0 2px;
   border-radius: var(--radius);
   overflow: hidden;
   cursor: pointer;
-  position: relative;
   box-shadow: var(--shadow);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  user-select: none;
 }
-.stage3d-canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
+.scene-sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(var(--sky-top, #2a1a4f), var(--sky-bot, #6b5a78));
 }
+.scene-scenery {
+  position: absolute;
+  inset: 0;
+  animation: sceneSway 16s ease-in-out infinite alternate;
+}
+.scene-scenery svg { width: 100%; height: 100%; display: block; }
+@keyframes sceneSway { from { transform: translateX(-1.5%); } to { transform: translateX(1.5%); } }
+.scene-ground {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 22%;
+  background: #5a4632;
+}
+.scene-hero {
+  position: absolute;
+  left: 50%;
+  bottom: 7%;
+  margin-left: -75px;
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transform-origin: bottom center;
+}
+.scene-hero.tap { animation: heroTap 0.22s ease; }
+@keyframes heroTap {
+  0% { transform: scale(1, 1); }
+  40% { transform: scale(1.12, 0.86); }
+  70% { transform: scale(0.95, 1.05); }
+  100% { transform: scale(1, 1); }
+}
+.scene-hero-shadow {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 86px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  filter: blur(3px);
+}
+.scene-hero-img {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.45));
+  visibility: hidden;
+  animation: heroBob 2.8s ease-in-out infinite;
+}
+@keyframes heroBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
 /* Çağ SVG figürleri — bulundukları yere göre boyutlanır */
 .era-fig {
@@ -1278,7 +1332,10 @@ main {
   .combo-flame,
   .era-modal-icon,
   .turbo-banner,
-  .speech-bubble.pop {
+  .speech-bubble.pop,
+  .scene-scenery,
+  .scene-hero-img,
+  .scene-hero.tap {
     animation: none !important;
   }
 }
