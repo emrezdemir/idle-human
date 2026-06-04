@@ -124,14 +124,23 @@ main {
   pointer-events: none;
 }
 
-/* 3D avatar tuvali — tıklama butonunu doldurur, tıklamayı engellemez */
-.avatar3d-canvas {
-  position: absolute;
-  inset: 0;
+/* 3D çağ sahnesi (mekan) — tıklanabilir alan */
+.stage3d {
+  width: 100%;
+  height: 220px;
+  margin: 4px 0 2px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  box-shadow: var(--shadow);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.stage3d-canvas {
+  display: block;
   width: 100% !important;
   height: 100% !important;
-  pointer-events: none;
-  border-radius: 50%;
 }
 
 /* Çağ SVG figürleri — bulundukları yere göre boyutlanır */

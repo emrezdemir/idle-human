@@ -1154,12 +1154,15 @@ function init() {
   sanitizeEra();
   updateAvatar();
   applyEraTheme();
-  // WebGL varsa tıklama avatarını 3D'ye yükselt (Three.js); yoksa SVG'de kal.
+  // WebGL varsa tık alanını 3D çağ sahnesine yükselt (Three.js); yoksa 2D'de kal.
   if (window.Avatar3D) {
-    avatar3dActive = window.Avatar3D.tryMount(
-      document.getElementById("clickButton"),
-      state.era
-    );
+    const stage = document.getElementById("stage3d");
+    avatar3dActive = window.Avatar3D.tryMount(stage, state.era);
+    if (avatar3dActive) {
+      document.getElementById("clickStage2d").classList.add("hidden");
+      stage.classList.remove("hidden");
+      stage.addEventListener("click", handleClick);
+    }
   }
 
   if (loaded) applyOfflineProgress();

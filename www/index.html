@@ -47,7 +47,10 @@
           </span>
           <span class="era-meter"><span id="eraMeterFill" class="era-meter-fill"></span></span>
         </button>
-        <div class="click-stage">
+        <!-- 3D çağ sahnesi (WebGL varsa); tıklanabilir. Yoksa gizli kalır. -->
+        <div id="stage3d" class="stage3d hidden" role="button" aria-label="Üret"></div>
+        <!-- 2D yedek tıklama alanı (WebGL yoksa) -->
+        <div class="click-stage" id="clickStage2d">
           <div id="clickRing" class="click-ring"></div>
           <button id="clickButton" class="click-button" aria-label="Üret">
             <span id="clickEmoji" class="click-emoji">🧍</span>

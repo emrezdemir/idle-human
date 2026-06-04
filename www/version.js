@@ -10,16 +10,26 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.5.0",
+  version: "1.6.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
     {
+      version: "1.6.0",
+      title: "Çağa özel 3D mekan",
+      notes: [
+        "Tık alanı artık çağı temsil eden 3D bir sahne: zemin, gökyüzü ve temalı objeler.",
+        "Karakter mekanda durur, sahne yavaşça döner; dokununca zıplar.",
+        "Zıplama sınırlandı — çok tıklayınca artık ekrandan kaçmıyor (düzeltme).",
+        "WebGL yoksa 2D butona güvenli geri dönüş.",
+      ],
+    },
+    {
       version: "1.5.0",
       title: "3D avatar (Three.js)",
       notes: [
-        "Tıklanan karakter artık kodla üretilen 3D figür (düşük-poligon).",
+        "Tıklanan karakter kodla üretilen 3D figür (düşük-poligon).",
         "Çağa göre gövde rengi + tepe aksesuarı değişir; hafif döner.",
         "Dokununca zıplar (squash & stretch). WebGL yoksa SVG'ye düşer.",
       ],
