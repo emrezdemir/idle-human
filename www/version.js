@@ -10,11 +10,20 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.4.0",
+  version: "1.5.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.5.0",
+      title: "3D avatar (Three.js)",
+      notes: [
+        "Tıklanan karakter artık kodla üretilen 3D figür (düşük-poligon).",
+        "Çağa göre gövde rengi + tepe aksesuarı değişir; hafif döner.",
+        "Dokununca zıplar (squash & stretch). WebGL yoksa SVG'ye düşer.",
+      ],
+    },
     {
       version: "1.4.0",
       title: "Özel çağ figürleri + PixiJS",

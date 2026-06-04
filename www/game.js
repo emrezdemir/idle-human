@@ -151,6 +151,9 @@ let state = newState();
 // Toplu alım miktarı: 1, 10, 100 veya "max" (kaydedilmez, UI tercihi)
 let buyAmount = 1;
 
+// 3D avatar (Three.js) devreye girdiyse true; değilse SVG avatar kullanılır.
+let avatar3dActive = false;
+
 /* --- Kombo sistemi (UI tercihi, kaydedilmez) --------------------------
    Hızlı ardışık tıklamalar komboyu büyütür; kombo dokunuş gücünü çarpar.
    Tıklama arası COMBO_WINDOW'u aşarsa kombo sıfırlanır. */
@@ -445,6 +448,9 @@ function handleClick(evt) {
 function triggerClickFx(x, y) {
   const intensity = comboIntensity();
 
+  // 3D avatar etkinse zıplat (squash & stretch)
+  if (avatar3dActive && window.Avatar3D) window.Avatar3D.bounce();
+
   // Parçacık patlaması (kombo arttıkça daha güçlü ve renkli)
   if (window.Effects) {
     Effects.burst(x, y, {
@@ -595,7 +601,12 @@ function eraArt(i) {
 }
 
 // Tıklanan avatarı mevcut çağa göre günceller.
+// 3D avatar etkinse onu güncelle; değilse SVG figürünü göster.
 function updateAvatar() {
+  if (avatar3dActive && window.Avatar3D) {
+    window.Avatar3D.setEra(state.era);
+    return;
+  }
   const emoji = document.getElementById("clickEmoji");
   if (emoji) emoji.innerHTML = eraArt(state.era);
 }
@@ -1143,6 +1154,13 @@ function init() {
   sanitizeEra();
   updateAvatar();
   applyEraTheme();
+  // WebGL varsa tıklama avatarını 3D'ye yükselt (Three.js); yoksa SVG'de kal.
+  if (window.Avatar3D) {
+    avatar3dActive = window.Avatar3D.tryMount(
+      document.getElementById("clickButton"),
+      state.era
+    );
+  }
 
   if (loaded) applyOfflineProgress();
   renderAchievements();

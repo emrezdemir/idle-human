@@ -103,6 +103,7 @@ main {
   background: radial-gradient(circle at 35% 30%, var(--panel-2), var(--panel));
   box-shadow: var(--shadow), inset 0 0 0 4px rgba(255, 209, 102, 0.25);
   cursor: pointer;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -121,6 +122,16 @@ main {
   font-size: 4.5rem;
   display: block;
   pointer-events: none;
+}
+
+/* 3D avatar tuvali — tıklama butonunu doldurur, tıklamayı engellemez */
+.avatar3d-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+  border-radius: 50%;
 }
 
 /* Çağ SVG figürleri — bulundukları yere göre boyutlanır */
