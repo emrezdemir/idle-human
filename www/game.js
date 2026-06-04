@@ -385,6 +385,7 @@ function doPrestige() {
   renderPrestige();
   save(false);
   showToast(`🧬 Yeniden doğdun! +${fmt(gain)} Gen`);
+  say(randomFrom(["Yeniden doğduk, daha güçlüyüz!", "Genler bizi ileri taşıyor!"]), 4000);
   if (state.soundOn && window.SFX) SFX.prestige();
   if (window.Effects) {
     Effects.confetti({ count: 140 });
@@ -418,28 +419,36 @@ function checkAchievements() {
       }
     }
   });
-  if (changed) renderAchievements();
+  if (changed) {
+    renderAchievements();
+    if (Math.random() < 0.5) say(randomFrom(["Başardık!", "Bir başarı daha!", "İşte bu!"]), 2500);
+  }
 }
 
 /* --- Tıklama ----------------------------------------------------------- */
 
 function handleClick(evt) {
   ensureAudio();
-  registerComboHit();
-  const gain = clickPower();
-  state.population += gain;
-  state.totalEarned += gain;
-  state.runEarned += gain;
-  state.clicks++;
-  playClick();
-
   // Tıklama konumu (fare ya da dokunma)
   const x = evt.clientX || (evt.touches && evt.touches[0] && evt.touches[0].clientX) ||
     window.innerWidth / 2;
   const y = evt.clientY || (evt.touches && evt.touches[0] && evt.touches[0].clientY) ||
     window.innerHeight / 2;
+  performClick(x, y, false);
+  maybeQuipOnClick();
+}
 
-  spawnFloatText(x, y, "+" + fmt(gain));
+// Bir tıklamanın (manuel veya turbo) üretim + efektini uygular.
+function performClick(x, y, quiet) {
+  registerComboHit();
+  let gain = clickPower();
+  if (turboActive()) gain *= TURBO_MULT;
+  state.population += gain;
+  state.totalEarned += gain;
+  state.runEarned += gain;
+  state.clicks++;
+  playClick();
+  if (!quiet) spawnFloatText(x, y, "+" + fmt(gain));
   triggerClickFx(x, y);
   renderResource();
 }
@@ -651,6 +660,7 @@ function checkEra() {
   applyEraTheme();
   renderEra();
   showEraPopup(target);
+  say(randomFrom(ERA_QUIPS[ERAS[target].id] || GENERIC_QUIPS), 4000);
   if (state.soundOn && window.SFX) SFX.prestige();
   if (window.Effects) {
     Effects.confetti({ count: 120 });
@@ -1136,6 +1146,99 @@ function openAbout() {
   show("aboutModal");
 }
 
+/* --- Etkileşim: karakter konuşması + sürpriz turbo -------------------- */
+
+// Çağa özel replikler (her çağdan birkaç tane).
+const ERA_QUIPS = {
+  stone:       ["Ateş... sıcak!", "Av bereketli olsun.", "Taşı taşa vur!"],
+  hunter:      ["Sürü yaklaşıyor!", "Mızrağımı bileyeyim.", "İz sürüyorum."],
+  agri:        ["Tohumlar filizleniyor.", "Hasat yakın!", "Toprak cömert."],
+  antiquity:   ["Bilgi güçtür.", "Şehrimiz büyüyor.", "Tanrılara şükür."],
+  medieval:    ["Krallık için!", "Kaleyi sağlam tut.", "Şövalyeler hazır."],
+  renaissance: ["Sanat ruhu besler.", "Yeni bir icat geliyor!", "Işık ve gölge..."],
+  industrial:  ["Çark dönüyor!", "Buhar gücü!", "Üretim tam gaz."],
+  info:        ["Veriler akıyor.", "Bir tık daha...", "Ağ büyüyor."],
+  space:       ["Yıldızlara!", "Kalkışa hazır.", "Yerçekimi zayıf, moral yüksek!"],
+  galactic:    ["Galaksi bizim.", "Tür sınırı aştı!", "Sonsuza ve ötesine!"],
+};
+const GENERIC_QUIPS = ["Devam et!", "Harika gidiyorsun!", "Bir tık daha?", "Hız kesme!", "İnsanlık seninle gurur duyuyor."];
+const TURBO_QUIPS = ["TURBO zamanı! ⚡", "Parmaklar makine gibi!", "Dur durak yok!", "Hız tavan!"];
+
+function randomFrom(a) { return a[(Math.random() * a.length) | 0]; }
+
+let speechTimer = null, lastSpeech = 0;
+// Karakterin konuşma balonunda kısa bir şey söylemesini sağlar.
+function say(text, ms = 3500) {
+  const b = document.getElementById("speechBubble");
+  if (!b) return;
+  b.textContent = text;
+  b.classList.remove("hidden", "pop");
+  void b.offsetWidth; // animasyonu yeniden başlat
+  b.classList.add("pop");
+  clearTimeout(speechTimer);
+  speechTimer = setTimeout(() => b.classList.add("hidden"), ms);
+  lastSpeech = Date.now();
+}
+function eraQuip() {
+  const id = ERAS[state.era].id;
+  return randomFrom((ERA_QUIPS[id] || []).concat(GENERIC_QUIPS));
+}
+// Çok sık konuşmasın diye aralıklı boşta replik.
+function scheduleIdleSpeech() {
+  setTimeout(() => {
+    if (!document.hidden && Date.now() - lastSpeech > 9000) say(eraQuip());
+    scheduleIdleSpeech();
+  }, 24000 + Math.random() * 22000);
+}
+// Tıklarken ara sıra teşvik repliği (seyrek).
+function maybeQuipOnClick() {
+  if (state.clicks % 130 === 0 && Date.now() - lastSpeech > 12000) say(randomFrom(GENERIC_QUIPS), 2500);
+}
+
+/* --- Sürpriz turbo (otomatik tıklama) --- */
+const TURBO_DURATION = 7000; // ms
+const TURBO_RATE = 90;       // ms (≈11/sn otomatik tık)
+const TURBO_MULT = 3;        // turbo sırasında tık kazancı çarpanı
+let turboUntil = 0, turboTimer = null;
+
+function turboActive() { return Date.now() < turboUntil; }
+
+// Aktif tık hedefinin (3D sahne ya da buton) ekran merkezini döndürür.
+function clickCenter() {
+  const elx = avatar3dActive ? document.getElementById("stage3d") : document.getElementById("clickButton");
+  if (elx) { const r = elx.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+  return { x: window.innerWidth / 2, y: window.innerHeight / 3 };
+}
+
+function startTurbo() {
+  if (turboActive()) return;
+  turboUntil = Date.now() + TURBO_DURATION;
+  const banner = document.getElementById("turboBanner");
+  if (banner) banner.classList.remove("hidden");
+  say(randomFrom(TURBO_QUIPS), 2500);
+  if (window.Effects) { Effects.confetti({ count: 70 }); Effects.screenShake(8); }
+  if (state.soundOn && window.SFX && SFX.milestone) SFX.milestone();
+  clearInterval(turboTimer);
+  turboTimer = setInterval(() => {
+    if (!turboActive()) {
+      clearInterval(turboTimer);
+      const b = document.getElementById("turboBanner");
+      if (b) b.classList.add("hidden");
+      return;
+    }
+    const c = clickCenter();
+    performClick(c.x, c.y, Math.random() < 0.5); // yarısında uçan yazı (kalabalık olmasın)
+  }, TURBO_RATE);
+}
+
+// Ara sıra (rastgele) turbo sürprizi planla.
+function scheduleTurbo() {
+  setTimeout(() => {
+    if (!document.hidden) startTurbo();
+    scheduleTurbo();
+  }, 95000 + Math.random() * 130000); // ~1.5–3.7 dk arası
+}
+
 /* --- Başlat ------------------------------------------------------------ */
 
 function init() {
@@ -1237,6 +1340,12 @@ function init() {
   lastTick = Date.now();
   setInterval(gameLoop, TICK_MS);
   setInterval(() => save(false), 15000); // 15 sn'de bir otomatik kayıt
+
+  // Etkileşim: karakter ara sıra konuşur, ara sıra sürpriz turbo gelir
+  scheduleIdleSpeech();
+  scheduleTurbo();
+  setTimeout(() => say(loaded ? randomFrom(["Tekrar hoş geldin!", "Kaldığımız yerden!"]) : "Merhaba! Hadi başlayalım.", 3500), 1500);
+
   window.addEventListener("beforeunload", () => save(false));
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) save(false);

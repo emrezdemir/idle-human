@@ -16,6 +16,15 @@ window.APP_VERSION = {
 
   changelog: [
     {
+      version: "1.8.0",
+      title: "Etkileşim: konuşan karakter + sürpriz turbo",
+      notes: [
+        "Karakter ara sıra konuşuyor (çağa özel ve olaylara göre replikler).",
+        "Sürpriz TURBO: ara sıra kısa süreli otomatik hızlı tıklama (×3) + efekt.",
+        "Çağ atlama, prestij ve başarımlarda karakter yorum yapıyor.",
+      ],
+    },
+    {
       version: "1.7.0",
       title: "Gerçek karakter yüzleri",
       notes: [
