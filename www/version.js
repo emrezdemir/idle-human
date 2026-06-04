@@ -10,11 +10,20 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.6.0",
+  version: "1.7.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.7.0",
+      title: "Gerçek karakter yüzleri",
+      notes: [
+        "Çağlara özel 2D portre yüzler 3D karaktere bağlandı (daire kırpma + çerçeve).",
+        "Her çağ tipine uygun yüz seçildi (Taş Devri yabani, Bilgi modern genç vb.).",
+        "Yüz yüklenemezse prosedürel kafaya güvenli geri dönüş.",
+      ],
+    },
     {
       version: "1.6.0",
       title: "Çağa özel 3D mekan",

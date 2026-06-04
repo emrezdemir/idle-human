@@ -31,6 +31,13 @@
   const SKIN = 0xe8b98f;
   const HEAD_Y = 1.15, HEAD_R = 0.6;
 
+  // Çağ id -> kullanılacak 2D yüz portresi (assets/characters/<n>p.png)
+  // 14 portreden insanlık temasına uyan 10'u seçildi (ork/kurukafa/placeholder atlandı).
+  const FACE = {
+    stone: 1, hunter: 13, agri: 8, antiquity: 4, medieval: 2,
+    renaissance: 6, industrial: 12, info: 11, space: 3, galactic: 9,
+  };
+
   // Çağ id -> karakter (gövde + tepe aksesuarı) ve mekan (zemin/gök/objeler)
   const ORDER = ["stone","hunter","agri","antiquity","medieval","renaissance","industrial","info","space","galactic"];
   const ERA3D = {
@@ -85,13 +92,71 @@
     }
     return g;
   }
-  function buildFigure(cfg) {
+  // --- 2D yüz portreleri: daire kırpılmış doku (kare arka plan atılır) ---
+  const faceCache = {}; // id -> THREE.Texture | null (yüklenemedi) | undefined (henüz)
+  function loadFace(id, cb) {
+    if (id in faceCache) { cb(faceCache[id]); return; }
+    const n = FACE[id];
+    if (!n) { faceCache[id] = null; cb(null); return; }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const S = img.width || 32;
+        const cv = document.createElement("canvas"); cv.width = cv.height = S;
+        const g = cv.getContext("2d");
+        g.imageSmoothingEnabled = false;
+        g.drawImage(img, 0, 0);
+        // daire maskesi: yüzü ortalayıp kare arka planı temizle
+        g.globalCompositeOperation = "destination-in";
+        g.beginPath();
+        g.arc(S / 2, S * 0.46, S * 0.46, 0, Math.PI * 2);
+        g.fill();
+        const tex = new THREE.CanvasTexture(cv);
+        tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
+        tex.encoding = THREE.sRGBEncoding;
+        faceCache[id] = tex; cb(tex);
+      } catch (e) { faceCache[id] = null; cb(null); }
+    };
+    img.onerror = () => { faceCache[id] = null; cb(null); };
+    img.src = "assets/characters/" + n + "p.png";
+  }
+  function preloadFaces() { Object.keys(FACE).forEach((id) => loadFace(id, () => {})); }
+
+  // Prosedürel kafa (yüz portresi yüklenemezse yedek)
+  function proceduralHead(cfg) {
+    const h = new THREE.Group();
+    const sphere = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 24, 24), mat(SKIN, { roughness: 0.8 }));
+    h.add(sphere);
+    const eyeMat = mat(0x2a2030, { roughness: 0.5 });
+    for (const dx of [-0.2, 0.2]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 10), eyeMat); e.position.set(dx, 0.05, HEAD_R - 0.02); h.add(e); }
+    const top = buildTopper(cfg.top, cfg.tc);
+    top.position.y = -HEAD_Y; // buildTopper HEAD_Y'yi mutlak varsayıyor; head grubuna göre düzelt
+    h.add(top);
+    return h;
+  }
+  // Portre kafa: daire kırpılmış yüz düzlemi + çağ renginde çerçeve
+  function portraitHead(cfg, tex) {
+    const h = new THREE.Group();
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+    h.add(plane);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.06, 12, 36), mat(cfg.tc, { metalness: 0.3 }));
+    ring.position.z = 0.05; h.add(ring);
+    return h;
+  }
+  function setHead(fig, tex) {
+    const old = fig.userData.head;
+    if (old) { old.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); fig.remove(old); }
+    const head = tex ? portraitHead(fig.userData.cfg, tex) : proceduralHead(fig.userData.cfg);
+    head.position.y = HEAD_Y;
+    fig.add(head); fig.userData.head = head;
+  }
+  function buildFigure(cfg, tex) {
     const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.78,1.35,28), mat(cfg.body)); g.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R,28,28), mat(SKIN,{roughness:0.8})); head.position.y=HEAD_Y; g.add(head);
-    const eyeMat = mat(0x2a2030,{roughness:0.5});
-    for (const dx of [-0.2,0.2]) { const e=new THREE.Mesh(new THREE.SphereGeometry(0.08,10,10), eyeMat); e.position.set(dx,HEAD_Y+0.05,HEAD_R-0.02); g.add(e); }
-    g.add(buildTopper(cfg.top, cfg.tc));
+    g.userData.cfg = cfg;
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.78, 1.35, 28), mat(cfg.body));
+    g.add(body);
+    setHead(g, tex || null);
     return g;
   }
 
@@ -128,12 +193,20 @@
     return g;
   }
 
+  let currentId = null;
   function applyEra(eraIndex) {
     const id = ORDER[Math.max(0, Math.min(ORDER.length-1, eraIndex))];
     const cfg = ERA3D[id] || ERA3D.stone;
+    currentId = id;
     dispose(figure); dispose(env);
     env = buildEnv(cfg); world.add(env);
-    figure = buildFigure(cfg); world.add(figure);
+    // Yüz hazırsa portreyle, değilse prosedürel kafayla kur; yüklenince değiştir.
+    figure = buildFigure(cfg, faceCache[id] || null); world.add(figure);
+    if (faceCache[id] === undefined) {
+      loadFace(id, (tex) => {
+        if (currentId === id && figure && tex) setHead(figure, tex);
+      });
+    }
     scene.background = new THREE.Color(cfg.sky);
     if (scene.fog) { scene.fog.color.setHex(cfg.sky); }
     else scene.fog = new THREE.Fog(cfg.sky, 6.5, 15);
@@ -152,7 +225,7 @@
     if (posY > 0.6) { posY = 0.6; if (vy > 0) vy = 0; } // TAVAN — ekrandan kaçmaz
     squash *= 0.9;
 
-    if (world) world.rotation.y = t * 0.25;           // mekan turntable
+    if (env) env.rotation.y = t * 0.25;               // mekan yavaşça döner (karakter önde kalır)
     if (figure) {
       figure.position.y = posY + Math.sin(t*1.6)*0.04; // nefes/bob
       const sx = 1 + 0.14*squash, sy = 1 - 0.18*squash;
@@ -176,7 +249,9 @@
     const { w, h } = sizeOf();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(w, h, false);
+    renderer.outputEncoding = THREE.sRGBEncoding;
     renderer.domElement.className = "stage3d-canvas";
+    preloadFaces();
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
