@@ -10,11 +10,21 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.2.0",
+  version: "1.3.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.3.0",
+      title: "Çağ & evrim sistemi",
+      notes: [
+        "10 çağlık yolculuk: Taş Devri'nden Galaktik Çağ'a.",
+        "İlerledikçe tıklanan avatar evrilir ve arka plan tonu değişir.",
+        "Her çağ kalıcı üretim çarpanı + kısa hikâye verir (prestijde korunur).",
+        "Çağ göstergesi + 'Çağlar' yol haritası listesi eklendi.",
+      ],
+    },
     {
       version: "1.2.0",
       title: "Hakkında, sorumluluk reddi ve gizlilik",

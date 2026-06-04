@@ -81,6 +81,49 @@ function unlockedCount() {
   return Object.keys(state.unlocked).length;
 }
 
+/* --- Çağlar (evrim sistemi) -------------------------------------------
+   İnsanlığın yolculuğu: toplam kazanç (totalEarned) kilometre taşlarını
+   geçtikçe yeni bir çağa girilir. Her çağ kalıcı bir üretim çarpanı verir
+   (prestijde sıfırlanmaz), tıklanan avatarı ve arka plan tonunu değiştirir.
+   - threshold: bu çağa girmek için gereken toplam kazanç
+   - mult: bu çağın eklediği kalıcı çarpan (çağ 0 = başlangıç, 1)
+   - icon: hem tıklama butonundaki avatar hem göstergedeki simge
+   - bg2: arka plan radyal degradesinin üst tonu (koyu kalır) */
+const ERAS = [
+  { id: "stone",      name: "Taş Devri",        icon: "🧍",     threshold: 0,    mult: 1,    bg2: "#2a1a4f", story: "İnsanlık ateşi keşfetti. Uzun yolculuk başlıyor." },
+  { id: "hunter",     name: "Avcılık Çağı",     icon: "🏃",     threshold: 1e3,  mult: 1.6,  bg2: "#2e2218", story: "Sürülerin peşinde, mızrak elde — ilk avcı-toplayıcılar." },
+  { id: "agri",       name: "Tarım Devrimi",    icon: "🧑‍🌾",   threshold: 1e5,  mult: 1.7,  bg2: "#1f3a24", story: "Tohum toprakla buluştu; ilk köyler kuruldu." },
+  { id: "antiquity",  name: "Antik Çağ",        icon: "🧑‍🎓",   threshold: 1e7,  mult: 1.8,  bg2: "#3a3320", story: "Şehirler, yazı ve filozoflar doğdu." },
+  { id: "medieval",   name: "Orta Çağ",         icon: "💂",     threshold: 1e9,  mult: 1.9,  bg2: "#2a1f3a", story: "Şatolar yükseldi, loncalar ve krallıklar kuruldu." },
+  { id: "renaissance",name: "Rönesans",         icon: "🧑‍🎨",   threshold: 1e11, mult: 2.0,  bg2: "#3a2030", story: "Sanat ve bilim yeniden doğdu." },
+  { id: "industrial", name: "Sanayi Devrimi",   icon: "🧑‍🏭",   threshold: 1e13, mult: 2.2,  bg2: "#2b2b30", story: "Buhar ve çelik dünyayı dönüştürdü." },
+  { id: "info",       name: "Bilgi Çağı",       icon: "🧑‍💻",   threshold: 1e15, mult: 2.4,  bg2: "#15303a", story: "Bilgi ışık hızında akıyor; dünya birbirine bağlandı." },
+  { id: "space",      name: "Uzay Çağı",        icon: "🧑‍🚀",   threshold: 1e18, mult: 2.6,  bg2: "#1a1f3a", story: "İnsanlık yıldızlara açıldı." },
+  { id: "galactic",   name: "Galaktik Çağ",     icon: "🦾",     threshold: 1e21, mult: 3.0,  bg2: "#2a1040", story: "Galaksi artık eviniz. Tür sınırı aştı." },
+];
+
+// state.era'yı geçerli aralığa sabitler (bozuk/eski kayıtlara karşı).
+function sanitizeEra() {
+  if (typeof state.era !== "number" || state.era < 0 || isNaN(state.era)) state.era = 0;
+  if (state.era >= ERAS.length) state.era = ERAS.length - 1;
+}
+
+// totalEarned'a göre ulaşılabilecek en yüksek çağ indeksi.
+function highestEraIndex(totalEarned) {
+  let idx = 0;
+  for (let i = 0; i < ERAS.length; i++) {
+    if (totalEarned >= ERAS[i].threshold) idx = i;
+  }
+  return idx;
+}
+
+// Ulaşılan tüm çağların kalıcı çarpanı (çarpımları).
+function eraMultiplier() {
+  let m = 1;
+  for (let i = 0; i <= state.era && i < ERAS.length; i++) m *= ERAS[i].mult;
+  return m;
+}
+
 /* --- Oyun durumu ------------------------------------------------------ */
 
 function newState() {
@@ -93,6 +136,7 @@ function newState() {
     clicks: 0,
     genes: 0, // kalıcı prestij puanı
     prestiges: 0, // kaç kez prestij yapıldı
+    era: 0, // ulaşılan en yüksek çağ indeksi (prestijde sıfırlanmaz)
     owned,
     upgrades: {}, // id -> true
     unlocked: {}, // açılan başarımlar: id -> true
@@ -177,7 +221,7 @@ function achievementMultiplier() {
 
 // Üretime ve dokunuşa uygulanan toplam küresel çarpan.
 function globalMultiplier() {
-  return geneMultiplier() * achievementMultiplier();
+  return geneMultiplier() * achievementMultiplier() * eraMultiplier();
 }
 
 // Şu an prestij yapılırsa kazanılacak gen sayısı.
@@ -321,6 +365,8 @@ function doPrestige() {
   const keptUnlocked = state.unlocked;
   const keptClicks = state.clicks;
   const keptSound = state.soundOn;
+  const keptMusic = state.musicOn;
+  const keptEra = state.era; // çağlar kalıcı yolculuk — prestijde korunur
   state = newState();
   state.genes = keptGenes;
   state.totalEarned = keptTotal;
@@ -328,6 +374,8 @@ function doPrestige() {
   state.unlocked = keptUnlocked;
   state.clicks = keptClicks;
   state.soundOn = keptSound;
+  state.musicOn = keptMusic;
+  state.era = keptEra;
 
   renderShops();
   renderResource();
@@ -537,6 +585,96 @@ function renderAchievements() {
   });
 }
 
+/* --- Çağ arayüzü ------------------------------------------------------ */
+
+// Tıklanan avatarı mevcut çağa göre günceller.
+function updateAvatar() {
+  const emoji = document.getElementById("clickEmoji");
+  if (emoji) emoji.textContent = ERAS[state.era].icon;
+}
+
+// Arka plan tonunu çağa göre yumuşakça değiştirir.
+function applyEraTheme() {
+  const bg2 = ERAS[state.era].bg2;
+  if (bg2) document.documentElement.style.setProperty("--bg-2", bg2);
+}
+
+// Çağ göstergesini (ad, simge, sonraki çağa ilerleme) günceller.
+function renderEra() {
+  const era = ERAS[state.era];
+  const nameEl = document.getElementById("eraName");
+  const iconEl = document.getElementById("eraIcon");
+  if (nameEl) nameEl.textContent = era.name;
+  if (iconEl) iconEl.textContent = era.icon;
+
+  const next = ERAS[state.era + 1];
+  const nextEl = document.getElementById("eraNext");
+  const fill = document.getElementById("eraMeterFill");
+  if (next) {
+    // Bu çağın başlangıcı ile sonraki çağ eşiği arasındaki ilerleme (log ölçek).
+    const lo = era.threshold > 0 ? Math.log10(era.threshold) : 0;
+    const hi = Math.log10(next.threshold);
+    const cur = state.totalEarned > 0 ? Math.log10(state.totalEarned) : 0;
+    const pct = Math.max(0, Math.min(1, (cur - lo) / (hi - lo)));
+    if (nextEl) nextEl.textContent = "sonraki: " + next.name + " %" + Math.floor(pct * 100);
+    if (fill) fill.style.width = Math.round(pct * 100) + "%";
+  } else {
+    if (nextEl) nextEl.textContent = "son çağ — zirvedesin";
+    if (fill) fill.style.width = "100%";
+  }
+}
+
+// totalEarned yeni çağ(lar)ı açtıysa ilerlet ve kutla.
+function checkEra() {
+  const target = highestEraIndex(state.totalEarned);
+  if (target <= state.era) return;
+  state.era = target; // birden fazla çağ atlanırsa en yükseğe sıçra
+  updateAvatar();
+  applyEraTheme();
+  renderEra();
+  showEraPopup(target);
+  if (state.soundOn && window.SFX) SFX.prestige();
+  if (window.Effects) {
+    Effects.confetti({ count: 120 });
+    Effects.screenShake(8);
+  }
+}
+
+function showEraPopup(idx) {
+  const era = ERAS[idx];
+  document.getElementById("eraModalIcon").textContent = era.icon;
+  document.getElementById("eraModalName").textContent = era.name;
+  document.getElementById("eraModalStory").textContent = era.story;
+  document.getElementById("eraModalBonus").textContent =
+    Math.round((era.mult - 1) * 100);
+  document.getElementById("eraModal").classList.remove("hidden");
+}
+
+function openEras() {
+  document.getElementById("erasReached").textContent = state.era + 1;
+  document.getElementById("erasTotal").textContent = ERAS.length;
+  document.getElementById("erasBonus").textContent =
+    "+%" + Math.round((eraMultiplier() - 1) * 100);
+  const list = document.getElementById("erasList");
+  list.innerHTML = "";
+  ERAS.forEach((era, i) => {
+    const reached = i <= state.era;
+    const current = i === state.era;
+    const row = document.createElement("div");
+    row.className = "era-row" + (reached ? " reached" : " locked") + (current ? " current" : "");
+    const bonus = i === 0 ? "başlangıç" : "+%" + Math.round((era.mult - 1) * 100) + " üretim";
+    row.innerHTML = `
+      <span class="era-row-icon">${reached ? era.icon : "🔒"}</span>
+      <span class="era-row-body">
+        <span class="era-row-name">${era.name}${current ? ' <span class="era-row-tag">şu an</span>' : ""}</span>
+        <span class="era-row-desc">${reached ? era.story : "Aç: " + fmt(era.threshold) + " toplam kazanç"}</span>
+      </span>
+      <span class="era-row-bonus">${bonus}</span>`;
+    list.appendChild(row);
+  });
+  document.getElementById("erasModal").classList.remove("hidden");
+}
+
 function updateSoundButton() {
   // Üst bardaki hızlı sessize-al ikonu (ses efektleri ana anahtarı).
   const btn = document.getElementById("soundButton");
@@ -612,8 +750,11 @@ function applySaveString(saveString) {
   GENERATORS.forEach((g) => {
     if (typeof state.owned[g.id] !== "number") state.owned[g.id] = 0;
   });
+  sanitizeEra();
   save(false);
   renderShops();
+  updateAvatar();
+  applyEraTheme();
   renderResource();
   renderAchievements();
   applyAudioPrefs();
@@ -732,6 +873,7 @@ function renderResource() {
   // Mağaza butonlarının erişilebilirlik durumunu güncelle (ucuz işlem)
   refreshAffordability();
   renderPrestige();
+  renderEra();
 }
 
 // Sadece disabled/affordable durumunu günceller; innerHTML'i yeniden yazmaz.
@@ -778,6 +920,7 @@ function gameLoop() {
     state.totalEarned += gain;
     state.runEarned += gain;
   }
+  checkEra();
   checkAchievements();
   renderResource();
 }
@@ -804,6 +947,7 @@ function load() {
     GENERATORS.forEach((g) => {
       if (typeof state.owned[g.id] !== "number") state.owned[g.id] = 0;
     });
+    sanitizeEra();
     return true;
   } catch (e) {
     return false;
@@ -846,6 +990,8 @@ function hardReset() {
   localStorage.removeItem(SAVE_KEY);
   state = newState();
   renderShops();
+  updateAvatar();
+  applyEraTheme();
   renderResource();
   showToast("♻️ Oyun sıfırlandı");
 }
@@ -984,6 +1130,13 @@ function init() {
   setupTabs();
   setupBuyAmount();
 
+  // Çağ: yüklemede mevcut çağa sessizce eşitle (popup yok), avatar+temayı uygula.
+  // Popup yalnızca oyun sırasında YENİ bir çağ açılınca gösterilir (checkEra).
+  state.era = Math.max(state.era || 0, highestEraIndex(state.totalEarned));
+  sanitizeEra();
+  updateAvatar();
+  applyEraTheme();
+
   if (loaded) applyOfflineProgress();
   renderAchievements();
   renderResource();
@@ -1026,6 +1179,11 @@ function init() {
   // Sürüm geçmişi
   document.getElementById("versionTag").addEventListener("click", openChangelog);
   document.getElementById("changelogClose").addEventListener("click", () => hide("changelogModal"));
+
+  // Çağlar
+  document.getElementById("eraIndicator").addEventListener("click", openEras);
+  document.getElementById("erasClose").addEventListener("click", () => hide("erasModal"));
+  document.getElementById("eraModalClose").addEventListener("click", () => hide("eraModal"));
 
   // Hesap / bulut kayıt arayüzü
   document.getElementById("accountButton").addEventListener("click", openAccountModal);

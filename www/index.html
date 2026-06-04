@@ -38,10 +38,19 @@
     <main>
       <!-- Tıklama alanı -->
       <section class="clicker">
+        <!-- Çağ göstergesi: dokununca tüm çağ listesini açar -->
+        <button id="eraIndicator" class="era-indicator" aria-label="Çağlar">
+          <span class="era-line">
+            <span id="eraIcon" class="era-icon">🧍</span>
+            <span id="eraName" class="era-name">Taş Devri</span>
+            <span id="eraNext" class="era-next"></span>
+          </span>
+          <span class="era-meter"><span id="eraMeterFill" class="era-meter-fill"></span></span>
+        </button>
         <div class="click-stage">
           <div id="clickRing" class="click-ring"></div>
           <button id="clickButton" class="click-button" aria-label="Üret">
-            <span class="click-emoji">🧑</span>
+            <span id="clickEmoji" class="click-emoji">🧍</span>
           </button>
         </div>
         <p class="click-hint">Dokun ve insanlığı ilerlet</p>
@@ -246,6 +255,28 @@
         </section>
       </div>
       <button id="aboutClose" class="primary-button account-close">Kapat</button>
+    </div>
+  </div>
+
+  <!-- Yeni çağ kutlaması -->
+  <div id="eraModal" class="modal hidden">
+    <div class="modal-card era-card">
+      <div id="eraModalIcon" class="era-modal-icon">🌾</div>
+      <p class="era-modal-kicker">Yeni Çağ</p>
+      <h2 id="eraModalName">Tarım Devrimi</h2>
+      <p id="eraModalStory" class="era-modal-story"></p>
+      <p class="era-modal-bonus">+<span id="eraModalBonus">0</span>% kalıcı üretim</p>
+      <button id="eraModalClose" class="primary-button">Devam</button>
+    </div>
+  </div>
+
+  <!-- Tüm çağların listesi (yol haritası) -->
+  <div id="erasModal" class="modal hidden">
+    <div class="modal-card eras-card">
+      <h2>🗺️ Çağlar</h2>
+      <p class="eras-summary"><span id="erasReached">0</span>/<span id="erasTotal">0</span> çağ · <span id="erasBonus">+%0</span> üretim</p>
+      <div id="erasList" class="eras-list"></div>
+      <button id="erasClose" class="primary-button account-close">Kapat</button>
     </div>
   </div>
 

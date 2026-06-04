@@ -998,10 +998,175 @@ main {
   color: var(--accent-2);
 }
 
+/* =========================================================
+   Çağ (evrim) sistemi: gösterge, kutlama, çağ listesi
+   ========================================================= */
+
+/* Tıklayıcı üstündeki çağ göstergesi (tıklanabilir) */
+.era-indicator {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto 4px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  display: block;
+  text-align: left;
+  transition: background 0.2s ease;
+}
+.era-indicator:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+.era-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.era-icon {
+  font-size: 1.1rem;
+}
+.era-name {
+  font-weight: 700;
+}
+.era-next {
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+.era-meter {
+  display: block;
+  height: 5px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.era-meter-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 0.3s ease;
+}
+
+/* Yeni çağ kutlama penceresi */
+.era-card {
+  max-width: 340px;
+  width: 100%;
+}
+.era-modal-icon {
+  font-size: 3.2rem;
+  line-height: 1;
+  margin-bottom: 4px;
+  animation: eraPop 0.5s ease;
+}
+@keyframes eraPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.era-modal-kicker {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.era-card h2 {
+  margin: 2px 0 8px;
+}
+.era-modal-story {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+.era-modal-bonus {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--accent-2);
+  margin: 0 0 16px;
+}
+
+/* Çağ listesi (yol haritası) */
+.eras-card {
+  max-width: 400px;
+  width: 100%;
+}
+.eras-summary {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+}
+.eras-list {
+  max-height: 55vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+.era-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.era-row.locked {
+  opacity: 0.55;
+}
+.era-row.current {
+  outline: 2px solid var(--accent);
+}
+.era-row-icon {
+  font-size: 1.5rem;
+  flex: 0 0 auto;
+}
+.era-row-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.era-row-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+.era-row-tag {
+  font-size: 0.68rem;
+  color: #2a1a00;
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 1px 7px;
+  margin-left: 4px;
+  font-weight: 700;
+}
+.era-row-desc {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+.era-row-bonus {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent-2);
+  text-align: right;
+}
+
 /* Hareket azaltma tercihine saygı: animasyonları yumuşat */
 @media (prefers-reduced-motion: reduce) {
   .click-button,
-  .combo-flame {
+  .combo-flame,
+  .era-modal-icon {
     animation: none !important;
   }
 }
