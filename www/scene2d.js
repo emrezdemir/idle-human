@@ -20,6 +20,26 @@
   };
   const ORDER = ["stone","hunter","agri","antiquity","medieval","renaissance","industrial","info","space","galactic"];
 
+  // Çağ id -> karakter gövde (cüppe) rengi.
+  const BODY = {
+    stone:"#6b4226", hunter:"#5a4a2a", agri:"#6b8e3a", antiquity:"#c9b98a", medieval:"#6b7280",
+    renaissance:"#7a3050", industrial:"#3a3a42", info:"#2a6b7a", space:"#cdd6ea", galactic:"#9b59ff",
+  };
+  function darken(hex, k) {
+    const n = parseInt(hex.slice(1), 16);
+    const r = Math.round(((n >> 16) & 255) * k), g = Math.round(((n >> 8) & 255) * k), b = Math.round((n & 255) * k);
+    return "rgb(" + r + "," + g + "," + b + ")";
+  }
+  // Kafanın altına basit bir 2D gövde (omuz + cüppe + yaka) çizer.
+  function bodySvg(id) {
+    const c = BODY[id] || "#6b7280";
+    const dk = darken(c, 0.7);
+    return `<svg viewBox="0 0 120 92" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">` +
+      `<path d="M28 20 H92 L106 90 H14 Z" fill="${c}"/>` +
+      `<ellipse cx="60" cy="22" rx="34" ry="17" fill="${c}"/>` +
+      `<path d="M49 14 H71 L65 44 H55 Z" fill="${dk}"/></svg>`;
+  }
+
   // Sahne tanımları: gökyüzü üst/alt, zemin rengi ve silüet SVG'si.
   // SVG viewBox 0 0 400 200, alta yaslı; sky CSS ile arkada.
   const SCENES = {
@@ -87,7 +107,7 @@
        <rect x="0" y="150" width="400" height="50" fill="#241038"/>` },
   };
 
-  let host = null, sky = null, scenery = null, ground = null, heroImg = null;
+  let host = null, sky = null, scenery = null, ground = null, heroImg = null, heroBody = null;
   let mounted = false, currentId = null;
   const heroCache = {}; // id -> dataURL | null (işlenemedi) | undefined
 
@@ -164,6 +184,7 @@
     if (ground) ground.style.background = sc.ground;
     if (scenery) scenery.innerHTML =
       `<svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">${sc.svg}</svg>`;
+    if (heroBody) heroBody.innerHTML = bodySvg(id);
     processHero(id, (url) => {
       if (currentId === id && heroImg) {
         if (url) { heroImg.src = url; heroImg.style.visibility = "visible"; }
@@ -179,6 +200,7 @@
     scenery = container.querySelector(".scene-scenery");
     ground = container.querySelector(".scene-ground");
     heroImg = container.querySelector(".scene-hero-img");
+    heroBody = container.querySelector(".scene-hero-body");
     mounted = true;
     // hepsini önceden işle (10 minik PNG)
     ORDER.forEach((id) => processHero(id, () => {}));
@@ -186,12 +208,15 @@
     return true;
   }
 
+  let tapT = null;
   function tap() {
     const hero = host && host.querySelector(".scene-hero");
     if (!hero) return;
     hero.classList.remove("tap");
     void hero.offsetWidth;
     hero.classList.add("tap");
+    clearTimeout(tapT);
+    tapT = setTimeout(() => hero.classList.remove("tap"), 240);
   }
 
   window.Scene2D = { mount, setEra, tap };

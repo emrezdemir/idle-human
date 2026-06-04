@@ -10,11 +10,19 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.9.0",
+  version: "1.9.1",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.9.1",
+      title: "Karaktere gövde",
+      notes: [
+        "Kırpılan portre yüzünün altına çağ renginde 2D gövde (cüppe) eklendi.",
+        "Artık 'havada kafa' değil, omuzlu gerçek bir karakter görünüyor.",
+      ],
+    },
     {
       version: "1.9.0",
       title: "2D mekan + gerçek karakter (3D kaldırıldı)",
