@@ -1466,6 +1466,18 @@ function init() {
   setInterval(gameLoop, TICK_MS);
   setInterval(() => save(false), 15000); // 15 sn'de bir otomatik kayıt
 
+  // Savaş hissi: boşta bile ritimli otomatik saldırı (kahraman vurur, düşman tepki verir)
+  setInterval(() => {
+    if (scene2dActive && enemyMax > 0 && !document.hidden && window.Scene2D) {
+      Scene2D.tap();
+      Scene2D.hitEnemy();
+    }
+  }, 560);
+  // Düşman ara sıra karşı hamle yapar (çift taraflı kavga hissi)
+  setInterval(() => {
+    if (scene2dActive && enemyMax > 0 && !document.hidden && window.Scene2D) Scene2D.enemyAttack();
+  }, 2100);
+
   // Etkileşim: karakter ara sıra konuşur, ara sıra sürpriz turbo gelir
   scheduleIdleSpeech();
   scheduleTurbo();

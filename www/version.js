@@ -10,11 +10,20 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.11.0",
+  version: "1.11.1",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.11.1",
+      title: "Savaş animasyonları (gerçekten dövüşüyor)",
+      notes: [
+        "Kahraman saldırıda düşmana hamle yapıp dönüyor (jab).",
+        "Düşman vurulunca geri savruluyor + kılıç darbesi efekti.",
+        "Boşta bile ritimli otomatik saldırı; düşman ara sıra karşı hamle yapıyor.",
+      ],
+    },
     {
       version: "1.11.0",
       title: "Idle savaş + boss (yeni oynanış kancası)",

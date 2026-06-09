@@ -112,8 +112,8 @@
   }
 
   let host = null, scenery = null, ground = null, heroChar = null;
-  let enemyArt = null, enemyHpFill = null, stageLabel = null, bossTimer = null;
-  let mounted = false, tapT = null;
+  let enemyArt = null, enemyHpFill = null, stageLabel = null, bossTimer = null, slashEl = null;
+  let mounted = false, tapT = null, attT = null, slashT = null, lungeT = null;
 
   function setEra(eraIndex) {
     if (!mounted) return;
@@ -136,6 +136,7 @@
     enemyHpFill = container.querySelector(".scene-enemy-hp-fill");
     stageLabel = container.querySelector(".scene-stage");
     bossTimer = container.querySelector(".scene-boss-timer");
+    slashEl = container.querySelector(".scene-slash");
     mounted = true;
     setEra(eraIndex);
     return true;
@@ -164,6 +165,25 @@
     enemyArt.classList.remove("hit");
     void enemyArt.offsetWidth;
     enemyArt.classList.add("hit");
+    slash();
+  }
+  // Düşmanın üstünde kısa kılıç darbesi efekti.
+  function slash() {
+    if (!slashEl) return;
+    slashEl.classList.remove("show");
+    void slashEl.offsetWidth;
+    slashEl.classList.add("show");
+    clearTimeout(slashT);
+    slashT = setTimeout(() => slashEl.classList.remove("show"), 240);
+  }
+  // Düşmanın kahramana doğru karşı hamlesi.
+  function enemyAttack() {
+    if (!enemyArt) return;
+    enemyArt.classList.remove("lunge");
+    void enemyArt.offsetWidth;
+    enemyArt.classList.add("lunge");
+    clearTimeout(lungeT);
+    lungeT = setTimeout(() => enemyArt.classList.remove("lunge"), 320);
   }
   function enemyDie() {
     const wrap = host && host.querySelector(".scene-enemy");
@@ -174,15 +194,16 @@
     setTimeout(() => wrap.classList.remove("die"), 360);
   }
 
+  // Kahramanın düşmana doğru hamlesi (saldırı = "tap").
   function tap() {
     const hero = host && host.querySelector(".scene-hero");
     if (!hero) return;
-    hero.classList.remove("tap");
+    hero.classList.remove("attacking");
     void hero.offsetWidth;
-    hero.classList.add("tap");
-    clearTimeout(tapT);
-    tapT = setTimeout(() => hero.classList.remove("tap"), 240);
+    hero.classList.add("attacking");
+    clearTimeout(attT);
+    attT = setTimeout(() => hero.classList.remove("attacking"), 300);
   }
 
-  window.Scene2D = { mount, setEra, tap, setEnemy, setHp, setStage, setBossTimer, hitEnemy, enemyDie };
+  window.Scene2D = { mount, setEra, tap, setEnemy, setHp, setStage, setBossTimer, hitEnemy, enemyDie, enemyAttack };
 })();
