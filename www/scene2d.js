@@ -93,7 +93,26 @@
     `<ellipse cx="110" cy="206" rx="180" ry="64" fill="rgba(0,0,0,0.10)"/>` +
     `<ellipse cx="320" cy="210" rx="150" ry="54" fill="rgba(0,0,0,0.16)"/></svg>`;
 
+  // Düşman (sevimli ama kızgın "slime") — tier'a göre renk, boss kırmızı+boynuz.
+  const ENEMY_COLORS = ["#9b59ff","#5aa0e0","#e0894a","#6bbf59","#c05ad0","#e0c04a","#5ac0b0","#d05a7a"];
+  function enemySvg(tier, boss) {
+    const col = boss ? "#c44b58" : ENEMY_COLORS[tier % ENEMY_COLORS.length];
+    const horns = boss
+      ? `<polygon points="34,70 24,30 56,64" fill="#7a2e36" ${ST}/><polygon points="126,70 136,30 104,64" fill="#7a2e36" ${ST}/>`
+      : "";
+    return `<svg viewBox="0 0 160 170" xmlns="http://www.w3.org/2000/svg">` +
+      horns +
+      `<path d="M20,150 A60,60 0 0 1 140,150 Z" fill="${col}" ${ST}/>` +
+      `<circle cx="60" cy="98" r="15" fill="#fff" ${ST}/><circle cx="100" cy="98" r="15" fill="#fff" ${ST}/>` +
+      `<circle cx="62" cy="101" r="6" fill="#2a2028"/><circle cx="102" cy="101" r="6" fill="#2a2028"/>` +
+      `<path d="M44,80 L70,90" stroke="#2a201e" stroke-width="5" stroke-linecap="round"/>` +
+      `<path d="M116,80 L90,90" stroke="#2a201e" stroke-width="5" stroke-linecap="round"/>` +
+      `<path d="M64,128 Q80,116 96,128" fill="none" stroke="#2a201e" stroke-width="5" stroke-linecap="round"/>` +
+      `</svg>`;
+  }
+
   let host = null, scenery = null, ground = null, heroChar = null;
+  let enemyArt = null, enemyHpFill = null, stageLabel = null, bossTimer = null;
   let mounted = false, tapT = null;
 
   function setEra(eraIndex) {
@@ -113,9 +132,46 @@
     scenery = container.querySelector(".scene-scenery");
     ground = container.querySelector(".scene-ground");
     heroChar = container.querySelector(".scene-hero-char");
+    enemyArt = container.querySelector(".scene-enemy-art");
+    enemyHpFill = container.querySelector(".scene-enemy-hp-fill");
+    stageLabel = container.querySelector(".scene-stage");
+    bossTimer = container.querySelector(".scene-boss-timer");
     mounted = true;
     setEra(eraIndex);
     return true;
+  }
+
+  /* --- Savaş HUD'u --- */
+  function setEnemy(tier, boss) {
+    if (enemyArt) enemyArt.innerHTML = enemySvg(tier || 0, !!boss);
+    const wrap = host && host.querySelector(".scene-enemy");
+    if (wrap) wrap.classList.toggle("boss", !!boss);
+  }
+  function setHp(frac) {
+    if (enemyHpFill) enemyHpFill.style.width = Math.max(0, Math.min(1, frac)) * 100 + "%";
+  }
+  function setStage(stage, boss) {
+    if (stageLabel) stageLabel.textContent = (boss ? "👑 BOSS · " : "") + "Stage " + stage;
+    if (stageLabel) stageLabel.classList.toggle("boss", !!boss);
+  }
+  function setBossTimer(sec) {
+    if (!bossTimer) return;
+    if (sec == null) bossTimer.classList.add("hidden");
+    else { bossTimer.classList.remove("hidden"); bossTimer.textContent = "⏱ " + Math.ceil(sec) + "s"; }
+  }
+  function hitEnemy() {
+    if (!enemyArt) return;
+    enemyArt.classList.remove("hit");
+    void enemyArt.offsetWidth;
+    enemyArt.classList.add("hit");
+  }
+  function enemyDie() {
+    const wrap = host && host.querySelector(".scene-enemy");
+    if (!wrap) return;
+    wrap.classList.remove("die");
+    void wrap.offsetWidth;
+    wrap.classList.add("die");
+    setTimeout(() => wrap.classList.remove("die"), 360);
   }
 
   function tap() {
@@ -128,5 +184,5 @@
     tapT = setTimeout(() => hero.classList.remove("tap"), 240);
   }
 
-  window.Scene2D = { mount, setEra, tap };
+  window.Scene2D = { mount, setEra, tap, setEnemy, setHp, setStage, setBossTimer, hitEnemy, enemyDie };
 })();

@@ -124,6 +124,28 @@ function eraMultiplier() {
   return m;
 }
 
+/* --- Savaş (idle combat) ---------------------------------------------
+   Dokunmak ve pasif üretim düşmana hasar verir; düşman ölünce ödül +
+   Stage ilerler. Her BOSS_EVERY aşamada bir BOSS (çok can + süre sınırı);
+   yenilen her boss kalıcı +%5 üretim verir (bossWins). Boss süre dolarsa
+   iyileşir (tekrar) — ilerlemeyi geçici durduran "duvar". */
+const ENEMY_BASE_HP = 8;
+const ENEMY_HP_GROWTH = 1.45;
+const BOSS_EVERY = 10;
+const BOSS_HP_MULT = 6;
+const BOSS_TIME = 30000; // ms
+const BOSS_BONUS = 0.05; // her boss kalıcı +%5 üretim
+
+function isBossStage(s) { return s % BOSS_EVERY === 0; }
+function enemyTier(s) { return Math.floor((s - 1) / BOSS_EVERY); }
+function enemyMaxHp(s) {
+  let hp = ENEMY_BASE_HP * Math.pow(ENEMY_HP_GROWTH, s - 1);
+  if (isBossStage(s)) hp *= BOSS_HP_MULT;
+  return hp;
+}
+// Yenilen boss başına kalıcı üretim çarpanı.
+function bossMultiplier() { return 1 + (state.bossWins || 0) * BOSS_BONUS; }
+
 /* --- Oyun durumu ------------------------------------------------------ */
 
 function newState() {
@@ -137,6 +159,8 @@ function newState() {
     genes: 0, // kalıcı prestij puanı
     prestiges: 0, // kaç kez prestij yapıldı
     era: 0, // ulaşılan en yüksek çağ indeksi (prestijde sıfırlanmaz)
+    stage: 1, // savaş aşaması (prestijde korunur)
+    bossWins: 0, // yenilen boss sayısı (her biri kalıcı +%5 üretim)
     owned,
     upgrades: {}, // id -> true
     unlocked: {}, // açılan başarımlar: id -> true
@@ -224,7 +248,7 @@ function achievementMultiplier() {
 
 // Üretime ve dokunuşa uygulanan toplam küresel çarpan.
 function globalMultiplier() {
-  return geneMultiplier() * achievementMultiplier() * eraMultiplier();
+  return geneMultiplier() * achievementMultiplier() * eraMultiplier() * bossMultiplier();
 }
 
 // Şu an prestij yapılırsa kazanılacak gen sayısı.
@@ -370,6 +394,8 @@ function doPrestige() {
   const keptSound = state.soundOn;
   const keptMusic = state.musicOn;
   const keptEra = state.era; // çağlar kalıcı yolculuk — prestijde korunur
+  const keptStage = state.stage; // savaş ilerlemesi de kalıcı
+  const keptBossWins = state.bossWins;
   state = newState();
   state.genes = keptGenes;
   state.totalEarned = keptTotal;
@@ -379,6 +405,8 @@ function doPrestige() {
   state.soundOn = keptSound;
   state.musicOn = keptMusic;
   state.era = keptEra;
+  state.stage = keptStage;
+  state.bossWins = keptBossWins;
 
   renderShops();
   renderResource();
@@ -450,6 +478,9 @@ function performClick(x, y, quiet) {
   playClick();
   if (!quiet) spawnFloatText(x, y, "+" + fmt(gain));
   triggerClickFx(x, y);
+  // Savaş: dokunuş düşmana hasar verir
+  dealDamage(gain);
+  if (window.Scene2D) Scene2D.hitEnemy();
   renderResource();
 }
 
@@ -950,6 +981,10 @@ function gameLoop() {
   }
   checkEra();
   checkAchievements();
+  // Savaş: pasif üretim otomatik saldırır + boss süresi + HUD
+  dealDamage(totalPerSecond() * dt);
+  checkBossTimeout();
+  renderCombat();
   renderResource();
 }
 
@@ -1239,6 +1274,73 @@ function scheduleTurbo() {
   }, 95000 + Math.random() * 130000); // ~1.5–3.7 dk arası
 }
 
+/* --- Savaş çalışma-zamanı --------------------------------------------- */
+
+let enemyHp = 0, enemyMax = 0, bossUntil = 0;
+
+function initEnemy() {
+  enemyMax = enemyMaxHp(state.stage);
+  enemyHp = enemyMax;
+  const boss = isBossStage(state.stage);
+  bossUntil = boss ? Date.now() + BOSS_TIME : 0;
+  if (window.Scene2D) {
+    Scene2D.setEnemy(enemyTier(state.stage), boss);
+    renderCombat();
+  }
+}
+
+function renderCombat() {
+  if (!window.Scene2D) return;
+  const boss = isBossStage(state.stage);
+  Scene2D.setHp(enemyMax > 0 ? enemyHp / enemyMax : 0);
+  Scene2D.setStage(state.stage, boss);
+  Scene2D.setBossTimer(boss && enemyMax > 0 ? Math.max(0, (bossUntil - Date.now()) / 1000) : null);
+}
+
+// Bir öldürmenin puan ödülü (ekonomiyi bozmayacak, üretimle orantılı).
+function killReward() {
+  return Math.max(1, clickPower() * 2, totalPerSecond() * 3);
+}
+
+function dealDamage(dmg) {
+  if (dmg <= 0 || enemyMax <= 0) return;
+  enemyHp -= dmg;
+  if (enemyHp <= 0) killEnemy();
+}
+
+function killEnemy() {
+  const boss = isBossStage(state.stage);
+  enemyMax = 0; // ölüm animasyonu sırasında tekrar tetiklenmesin
+  let reward = killReward();
+  if (boss) {
+    reward *= 5;
+    state.bossWins = (state.bossWins || 0) + 1;
+    showToast("👑 Boss yenildi! Kalıcı +%5 üretim");
+    say(randomFrom(["Boss düştü! 💪", "Bir duvar daha aştık!", "Kimse bizi durduramaz!"]), 3000);
+    if (window.Effects) { Effects.confetti({ count: 80 }); Effects.screenShake(8); }
+    if (state.soundOn && window.SFX && SFX.milestone) SFX.milestone();
+  } else if (state.soundOn && window.SFX) {
+    SFX.buy();
+  }
+  state.population += reward;
+  state.totalEarned += reward;
+  state.runEarned += reward;
+  const c = clickCenter();
+  spawnFloatText(c.x + 70, c.y - 20, "+" + fmt(reward));
+  if (window.Scene2D) Scene2D.enemyDie();
+  state.stage += 1;
+  setTimeout(initEnemy, 240); // ölüm animasyonundan sonra yeni düşman
+}
+
+// Boss süresi dolduysa iyileş (tekrar dene) — ilerleme duvarı.
+function checkBossTimeout() {
+  if (isBossStage(state.stage) && enemyMax > 0 && Date.now() > bossUntil) {
+    enemyHp = enemyMax;
+    bossUntil = Date.now() + BOSS_TIME;
+    say("Daha güçlü olmalıyız!", 2500);
+  }
+}
+
 /* --- Başlat ------------------------------------------------------------ */
 
 function init() {
@@ -1259,10 +1361,14 @@ function init() {
   applyEraTheme();
   // 2D çağ sahnesini kur (saf CSS/SVG; her ortamda çalışır). Tık alanı odur.
   if (window.Scene2D) {
-    const stage = document.getElementById("scene2d");
-    scene2dActive = window.Scene2D.mount(stage, state.era);
-    if (scene2dActive) stage.addEventListener("click", handleClick);
+    const stageEl = document.getElementById("scene2d");
+    scene2dActive = window.Scene2D.mount(stageEl, state.era);
+    if (scene2dActive) stageEl.addEventListener("click", handleClick);
   }
+  // Savaş: mevcut aşamanın düşmanını kur
+  if (typeof state.stage !== "number" || state.stage < 1 || isNaN(state.stage)) state.stage = 1;
+  if (typeof state.bossWins !== "number" || state.bossWins < 0) state.bossWins = 0;
+  initEnemy();
 
   if (loaded) applyOfflineProgress();
   renderAchievements();

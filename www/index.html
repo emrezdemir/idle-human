@@ -52,13 +52,20 @@
           <span class="era-meter"><span id="eraMeterFill" class="era-meter-fill"></span></span>
         </button>
         <!-- 2D çağ sahnesi: gökyüzü + manzara + zemin + karakter (tıklanabilir) -->
-        <div id="scene2d" class="scene2d" role="button" aria-label="Üret">
+        <div id="scene2d" class="scene2d" role="button" aria-label="Saldır">
           <div class="scene-sky"></div>
           <div class="scene-scenery"></div>
           <div class="scene-ground"></div>
+          <div class="scene-stage">Stage 1</div>
+          <div class="scene-boss-timer hidden">⏱ 30s</div>
           <div class="scene-hero">
             <span class="scene-hero-shadow"></span>
             <div class="scene-hero-char"></div>
+          </div>
+          <div class="scene-enemy">
+            <div class="scene-enemy-hp"><span class="scene-enemy-hp-fill"></span></div>
+            <span class="scene-hero-shadow scene-enemy-shadow"></span>
+            <div class="scene-enemy-art"></div>
           </div>
         </div>
         <!-- Yedek tıklama alanı (Scene2D yüklenmezse) -->

@@ -10,11 +10,21 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.10.0",
+  version: "1.11.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.11.0",
+      title: "Idle savaş + boss (yeni oynanış kancası)",
+      notes: [
+        "Artık dokunmak SALDIRI: düşmanın canı düşer, ölünce ödül + Stage ilerler.",
+        "Üretim otomatik DPS — oyun kendiliğinden savaşır (idle).",
+        "Her 10. aşamada BOSS (süre sınırlı); yenince kalıcı +%5 üretim.",
+        "Stage göstergesi + can barı + boss sayacı sahneye eklendi.",
+      ],
+    },
     {
       version: "1.10.0",
       title: "Yeni flat karakter stili",
