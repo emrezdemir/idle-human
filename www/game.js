@@ -478,7 +478,11 @@ function performClick(x, y, quiet) {
   playClick();
   if (!quiet) spawnFloatText(x, y, "+" + fmt(gain));
   triggerClickFx(x, y);
-  // Savaş: dokunuş düşmana hasar verir
+  // Savaş: dokunuş düşmana hasar verir + hasar sayısı göster
+  if (enemyMax > 0 && !quiet) {
+    const e = enemyCenter();
+    spawnDamageText(e.x + (Math.random() * 30 - 15), e.y - 10, "-" + fmt(gain));
+  }
   dealDamage(gain);
   if (window.Scene2D) Scene2D.hitEnemy();
   renderResource();
@@ -515,6 +519,24 @@ function triggerClickFx(x, y) {
     void ring.offsetWidth;
     ring.classList.add("animate");
   }
+}
+
+// Düşman üstünde kırmızı hasar sayısı.
+function spawnDamageText(x, y, text) {
+  const span = document.createElement("span");
+  span.className = "float-text float-dmg";
+  span.textContent = text;
+  span.style.left = x + "px";
+  span.style.top = y + "px";
+  document.body.appendChild(span);
+  setTimeout(() => span.remove(), 850);
+}
+
+// Sahnedeki düşmanın ekran merkezi (hasar sayısı/patlama konumu için).
+function enemyCenter() {
+  const e = document.querySelector(".scene-enemy-art");
+  if (e) { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+  return { x: window.innerWidth * 0.7, y: window.innerHeight * 0.3 };
 }
 
 function spawnFloatText(x, y, text) {
@@ -1325,8 +1347,9 @@ function killEnemy() {
   state.population += reward;
   state.totalEarned += reward;
   state.runEarned += reward;
-  const c = clickCenter();
-  spawnFloatText(c.x + 70, c.y - 20, "+" + fmt(reward));
+  const e = enemyCenter();
+  spawnFloatText(e.x, e.y - 24, "+" + fmt(reward));
+  if (window.Effects) Effects.burst(e.x, e.y, { count: boss ? 24 : 12, power: boss ? 2 : 1.3 });
   if (window.Scene2D) Scene2D.enemyDie();
   state.stage += 1;
   setTimeout(initEnemy, 240); // ölüm animasyonundan sonra yeni düşman
