@@ -53,11 +53,11 @@ Sıra önemlidir — `game.js` diğerlerine bağımlıdır:
 Görsel katmanlar ve güvenli geri dönüşler:
 - `effects-pixi.js`: WebGL varsa `window.Effects`'i Pixi motoruyla değiştirir;
   yoksa `effects.js` (canvas) kalır. İkisi de aynı API: `init, burst, confetti, screenShake`.
-- `scene2d.js`: çağ mekanını (CSS/SVG gökyüzü + manzara + zemin) ve karakteri
-  (portrenin flood-fill ile kırpılmış hâli) kurar; tık alanı `#scene2d`'dir
-  (`game.js`'te `scene2dActive`). Saf DOM olduğu için her ortamda çalışır;
-  Scene2D yoksa `eras-art.js` SVG figürlü 2D buton yedeğine düşer.
-- Önceki Three.js 3D sahne kötü göründüğü için kaldırıldı (v1.9.0).
+- `scene2d.js`: çağ mekanını (CSS/SVG gökyüzü + tepe silüeti + zemin) ve
+  karakteri (tamamen flat SVG vektör: kafa+gövde+çağ eşyası+aksesuar) kurar;
+  tık alanı `#scene2d`'dir (`game.js`'te `scene2dActive`). Saf DOM olduğu için
+  her ortamda çalışır; Scene2D yoksa `eras-art.js` SVG figürlü buton yedeğine düşer.
+- Önceki Three.js 3D sahne (v1.9.0) ve pixel-portre kırpma (v1.10.0) kaldırıldı.
 
 ## Sürüm damgalama
 
