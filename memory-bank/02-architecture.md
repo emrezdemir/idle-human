@@ -10,7 +10,7 @@ idle-human/
 │   ├── game.js              # Oyun mantığı: durum, ekonomi, çağlar, render, kayıt, menü
 │   ├── version.js           # window.APP_VERSION: sürüm + build + changelog (CI damgalar)
 │   ├── eras-art.js          # window.ERA_ART: çağlara özel SVG figürler (avatar yedeği)
-│   ├── scene2d.js           # window.Scene2D: CSS/SVG 2D çağ sahnesi + portre-kırpma karakter
+│   ├── scene2d.js           # window.Scene2D: CSS/SVG 2D çağ sahnesi + flat vektör karakter
 │   ├── assets/characters/   # Kullanıcının ekleyeceği 2D yüz görselleri (CC0/kendi)
 │   ├── audio.js             # SFX modülü — Web Audio ile prosedürel ses
 │   ├── effects.js           # Effects modülü — canvas parçacık/efekt motoru (yedek)

@@ -10,11 +10,20 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.9.1",
+  version: "1.10.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.10.0",
+      title: "Yeni flat karakter stili",
+      notes: [
+        "Karakter ve sahne temiz 'flat' vektör stiline geçti (özgün çizim).",
+        "Her çağda farklı kıyafet + eşya (sopa→kılıç→çekiç→ışın) + aksesuar.",
+        "Pixel-portre kırpma kaldırıldı; sahne sadeleşti.",
+      ],
+    },
     {
       version: "1.9.1",
       title: "Karaktere gövde",
