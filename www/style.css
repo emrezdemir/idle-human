@@ -744,6 +744,46 @@ main {
   font-size: 1.15rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
+.float-crit {
+  color: #ffd93a;
+  font-size: 1.55rem;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Ekipman paneli */
+.equip-summary {
+  text-align: center;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin: 0 0 10px;
+}
+.equip-list { display: flex; flex-direction: column; gap: 10px; }
+.equip-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: var(--panel);
+  color: var(--text);
+  cursor: default;
+}
+.equip-icon { font-size: 1.7rem; flex: 0 0 auto; }
+.equip-icon.dim, .equip-rar.dim, .equip-stat.dim { opacity: 0.45; }
+.equip-body { display: flex; flex-direction: column; min-width: 0; }
+.equip-rar { font-weight: 800; font-size: 0.95rem; }
+.equip-stat { font-size: 0.82rem; color: var(--text-dim); }
+.equip-hint {
+  margin: 14px 4px 0;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: center;
+}
 
 @keyframes floatUp {
   0% {

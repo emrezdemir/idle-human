@@ -93,6 +93,7 @@
         <button class="tab active" data-tab="generators">Üreticiler</button>
         <button class="tab" data-tab="upgrades">Yükseltmeler</button>
         <button class="tab" data-tab="prestige">Prestij</button>
+        <button class="tab" data-tab="equipment">⚔️</button>
         <button class="tab" data-tab="achievements">🏆</button>
       </nav>
 
@@ -121,6 +122,15 @@
           <button id="prestigeButton" class="primary-button">🌱 Yeniden Doğ</button>
           <p class="prestige-count">Toplam yeniden doğuş: <span id="prestigeCount">0</span></p>
         </div>
+      </section>
+      <section id="equipment" class="tab-panel">
+        <p class="equip-summary" id="equipCrit">Kritik şansı: %0</p>
+        <div class="equip-list">
+          <button class="equip-card" id="equip-weapon"></button>
+          <button class="equip-card" id="equip-armor"></button>
+          <button class="equip-card" id="equip-ring"></button>
+        </div>
+        <p class="equip-hint">Ekipman <strong>boss'ları yenince</strong> düşer. Daha güçlüsü otomatik kuşanılır. ⚔️ tık hasarı · 🛡️ üretim · 💍 kritik şansı.</p>
       </section>
       <section id="achievements" class="tab-panel">
         <p class="ach-summary"><span id="achCount">0</span>/<span id="achTotal">0</span> başarım · <span id="achBonus">+%0</span> üretim bonusu</p>

@@ -10,11 +10,21 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.11.1",
+  version: "1.12.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.12.0",
+      title: "Boss ganimeti: ekipman + kritik (derinlik)",
+      notes: [
+        "Boss yenince ekipman düşer: Silah (hasar), Zırh (üretim), Yüzük (kritik).",
+        "Nadirlik sistemi: Sıradan → Nadir → Destansı → Efsanevi (RNG koleksiyon).",
+        "Yeni ⚔️ Ekipman sekmesi; daha güçlü parça otomatik kuşanılır.",
+        "Yüzük kritik şansı verir: şansla ×3 hasar (sarı 'KRİTİK' yazısı).",
+      ],
+    },
     {
       version: "1.11.1",
       title: "Savaş animasyonları (gerçekten dövüşüyor)",

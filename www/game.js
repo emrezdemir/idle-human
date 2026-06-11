@@ -146,6 +146,36 @@ function enemyMaxHp(s) {
 // Yenilen boss başına kalıcı üretim çarpanı.
 function bossMultiplier() { return 1 + (state.bossWins || 0) * BOSS_BONUS; }
 
+/* --- Ekipman (boss loot) ---------------------------------------------- */
+// Slotlar: silah=tık hasarı, zırh=üretim, yüzük=kritik şansı.
+const SLOTS = [
+  { id: "weapon", name: "Silah", icon: "⚔️", stat: "tap",  statLabel: "hasar" },
+  { id: "armor",  name: "Zırh",  icon: "🛡️", stat: "prod", statLabel: "üretim" },
+  { id: "ring",   name: "Yüzük", icon: "💍", stat: "crit", statLabel: "kritik" },
+];
+const RARITIES = [
+  { id: "common",    name: "Sıradan",  color: "#9aa0aa", mult: 1, weight: 58 },
+  { id: "rare",      name: "Nadir",    color: "#4aa3ff", mult: 2, weight: 28 },
+  { id: "epic",      name: "Destansı", color: "#b45aff", mult: 4, weight: 11 },
+  { id: "legendary", name: "Efsanevi", color: "#ffb33a", mult: 8, weight: 3 },
+];
+function rarityById(id) { return RARITIES.find((r) => r.id === id) || RARITIES[0]; }
+function slotById(id) { return SLOTS.find((s) => s.id === id) || SLOTS[0]; }
+
+// Bir ekipman parçasının güç (% bonus) değeri: nadirlik × aşamayla ölçek.
+function piecePower(rarityMult, stage) {
+  return Math.round((4 + stage * 0.6) * rarityMult);
+}
+
+// Kuşanılı ekipmandan gelen çarpanlar.
+function equipPct(slot) {
+  const p = state.equip && state.equip[slot];
+  return p ? p.power : 0;
+}
+function equipTapMult() { return 1 + equipPct("weapon") / 100; }
+function equipProdMult() { return 1 + equipPct("armor") / 100; }
+function critChance() { return Math.min(60, equipPct("ring")); } // % (tavan 60)
+
 /* --- Oyun durumu ------------------------------------------------------ */
 
 function newState() {
@@ -161,6 +191,7 @@ function newState() {
     era: 0, // ulaşılan en yüksek çağ indeksi (prestijde sıfırlanmaz)
     stage: 1, // savaş aşaması (prestijde korunur)
     bossWins: 0, // yenilen boss sayısı (her biri kalıcı +%5 üretim)
+    equip: { weapon: null, armor: null, ring: null }, // boss'lardan düşen ekipman
     owned,
     upgrades: {}, // id -> true
     unlocked: {}, // açılan başarımlar: id -> true
@@ -264,7 +295,7 @@ function baseClickPower() {
   UPGRADES.forEach((u) => {
     if (u.type === "click" && state.upgrades[u.id]) power *= u.mult;
   });
-  return power * globalMultiplier();
+  return power * globalMultiplier() * equipTapMult();
 }
 
 // Bir dokunuşun gerçek kazancı: temel güç × anlık kombo çarpanı.
@@ -279,7 +310,7 @@ function generatorRate(gen) {
     if (u.type === "all") rate *= u.mult;
     if (u.type === "gen" && u.targetId === gen.id) rate *= u.mult;
   });
-  return rate * globalMultiplier();
+  return rate * globalMultiplier() * equipProdMult();
 }
 
 function totalPerSecond() {
@@ -396,6 +427,7 @@ function doPrestige() {
   const keptEra = state.era; // çağlar kalıcı yolculuk — prestijde korunur
   const keptStage = state.stage; // savaş ilerlemesi de kalıcı
   const keptBossWins = state.bossWins;
+  const keptEquip = state.equip; // ekipman da kalıcı
   state = newState();
   state.genes = keptGenes;
   state.totalEarned = keptTotal;
@@ -407,6 +439,7 @@ function doPrestige() {
   state.era = keptEra;
   state.stage = keptStage;
   state.bossWins = keptBossWins;
+  state.equip = keptEquip;
 
   renderShops();
   renderResource();
@@ -471,6 +504,9 @@ function performClick(x, y, quiet) {
   registerComboHit();
   let gain = clickPower();
   if (turboActive()) gain *= TURBO_MULT;
+  // Kritik (yüzük): şansla ×3 hasar
+  const isCrit = Math.random() * 100 < critChance();
+  if (isCrit) gain *= 3;
   state.population += gain;
   state.totalEarned += gain;
   state.runEarned += gain;
@@ -481,7 +517,7 @@ function performClick(x, y, quiet) {
   // Savaş: dokunuş düşmana hasar verir + hasar sayısı göster
   if (enemyMax > 0 && !quiet) {
     const e = enemyCenter();
-    spawnDamageText(e.x + (Math.random() * 30 - 15), e.y - 10, "-" + fmt(gain));
+    spawnDamageText(e.x + (Math.random() * 30 - 15), e.y - 10, (isCrit ? "KRİTİK " : "") + "-" + fmt(gain), isCrit);
   }
   dealDamage(gain);
   if (window.Scene2D) Scene2D.hitEnemy();
@@ -521,10 +557,10 @@ function triggerClickFx(x, y) {
   }
 }
 
-// Düşman üstünde kırmızı hasar sayısı.
-function spawnDamageText(x, y, text) {
+// Düşman üstünde kırmızı hasar sayısı (kritikse büyük/sarı).
+function spawnDamageText(x, y, text, crit) {
   const span = document.createElement("span");
-  span.className = "float-text float-dmg";
+  span.className = "float-text float-dmg" + (crit ? " float-crit" : "");
   span.textContent = text;
   span.style.left = x + "px";
   span.style.top = y + "px";
@@ -1341,6 +1377,7 @@ function killEnemy() {
     say(randomFrom(["Boss düştü! 💪", "Bir duvar daha aştık!", "Kimse bizi durduramaz!"]), 3000);
     if (window.Effects) { Effects.confetti({ count: 80 }); Effects.screenShake(8); }
     if (state.soundOn && window.SFX && SFX.milestone) SFX.milestone();
+    dropEquipment(); // boss ganimeti
   } else if (state.soundOn && window.SFX) {
     SFX.buy();
   }
@@ -1353,6 +1390,55 @@ function killEnemy() {
   if (window.Scene2D) Scene2D.enemyDie();
   state.stage += 1;
   setTimeout(initEnemy, 240); // ölüm animasyonundan sonra yeni düşman
+}
+
+// Boss yenince ekipman düşür (rastgele slot + ağırlıklı nadirlik).
+function dropEquipment() {
+  if (!state.equip) state.equip = { weapon: null, armor: null, ring: null };
+  const total = RARITIES.reduce((s, r) => s + r.weight, 0);
+  let roll = Math.random() * total, rar = RARITIES[0];
+  for (const r of RARITIES) { if (roll < r.weight) { rar = r; break; } roll -= r.weight; }
+  const slot = SLOTS[(Math.random() * SLOTS.length) | 0];
+  const power = piecePower(rar.mult, state.stage);
+  const cur = state.equip[slot.id];
+  const better = !cur || power > cur.power;
+  if (better) state.equip[slot.id] = { rarity: rar.id, power: power };
+  const tag = `${rar.name} ${slot.name}`;
+  if (better) {
+    showToast(`✨ ${tag}! +${power}% ${slot.statLabel}`);
+    if (rar.id === "legendary" || rar.id === "epic") {
+      say(rar.id === "legendary" ? "EFSANEVİ düştü! 🌟" : "Destansı parça! 🔥", 3000);
+      if (window.Effects) Effects.confetti({ count: rar.id === "legendary" ? 110 : 50 });
+    }
+  } else {
+    showToast(`${tag} düştü · mevcut daha iyi`);
+  }
+  renderEquipment();
+}
+
+// Ekipman panelini (3 slot) günceller.
+function renderEquipment() {
+  if (!state.equip) state.equip = { weapon: null, armor: null, ring: null };
+  SLOTS.forEach((slot) => {
+    const card = document.getElementById("equip-" + slot.id);
+    if (!card) return;
+    const p = state.equip[slot.id];
+    const r = p ? rarityById(p.rarity) : null;
+    card.style.borderColor = r ? r.color : "rgba(255,255,255,0.12)";
+    card.innerHTML = p
+      ? `<span class="equip-icon">${slot.icon}</span>
+         <span class="equip-body">
+           <span class="equip-rar" style="color:${r.color}">${r.name} ${slot.name}</span>
+           <span class="equip-stat">+${p.power}% ${slot.statLabel}</span>
+         </span>`
+      : `<span class="equip-icon dim">${slot.icon}</span>
+         <span class="equip-body">
+           <span class="equip-rar dim">${slot.name}</span>
+           <span class="equip-stat dim">boş · boss'tan düşer</span>
+         </span>`;
+  });
+  const cc = document.getElementById("equipCrit");
+  if (cc) cc.textContent = "Kritik şansı: %" + critChance();
 }
 
 // Boss süresi dolduysa iyileş (tekrar dene) — ilerleme duvarı.
@@ -1391,6 +1477,8 @@ function init() {
   // Savaş: mevcut aşamanın düşmanını kur
   if (typeof state.stage !== "number" || state.stage < 1 || isNaN(state.stage)) state.stage = 1;
   if (typeof state.bossWins !== "number" || state.bossWins < 0) state.bossWins = 0;
+  state.equip = Object.assign({ weapon: null, armor: null, ring: null }, state.equip || {});
+  renderEquipment();
   initEnemy();
 
   if (loaded) applyOfflineProgress();
