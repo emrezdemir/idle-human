@@ -84,9 +84,43 @@ Hem dokunuşa hem pasif üretime uygulanır.
 `fmt(n)`: 1000 altı tam sayı; üstü K/M/B/T/Qa/Qi/... son ekleriyle (SUFFIXES dizisi,
 12 kademe). Yeni çok büyük değerler gerekirse SUFFIXES'i genişlet.
 
+## Savaş + ekipman (combat.js)
+
+`window.Combat` (www/combat.js) ayrı modül. game.js init'te bağımlılıkları (DI)
+geçer, sonra her tick'te `Combat.dealDamage(totalPerSecond()*dt)` çağrılır.
+
+| Sabit | Değer | Anlam |
+|---|---|---|
+| `ENEMY_BASE_HP` | 8 | aşama 1 düşman canı |
+| `ENEMY_HP_GROWTH` | 1.45 | her aşamada × |
+| `BOSS_EVERY` | 10 | her 10. aşamada boss |
+| `BOSS_HP_MULT` | 6 | boss'un can çarpanı |
+| `BOSS_TIME` | 30000 ms | boss süre limiti |
+| `BOSS_TIMEOUT_HEAL` | 0.65 | süre dolarsa %65 iyileşir (eskiden tam) |
+| `BOSS_REWARD_MULT` | 10 | boss puan ödülü ×10 (eskiden ×5) |
+| `BOSS_BONUS` | 0.05 | yenilen her boss kalıcı +%5 üretim |
+
+### Ekipman + kritik
+
+3 slot (silah/zırh/yüzük), 4 nadirlik (Sıradan/Nadir/Destansı/Efsanevi).
+Parça gücü `(4 + stage·0.6) × rarityMult` formülüyle aşamayla ölçeklenir.
+
+**Kritik şansı (yeni)**: `floor(sqrt(ringPct × 5))`, %60 tavanlı. Azalan getiri
+sayesinde tek efsanevi yüzük artık tavanı anında doldurmaz.
+- ring %16 → %8.9 · ring %40 → %14.1 · ring %180 → %30 · ring %720 → %60
+
+**Reroll**: ekipman kartına dokunmak, slotu rastgele yeni nadirlik+güçle
+değiştirir. Bedel: `max(1000, totalPerSecond × 60)` — yaklaşık 1 dakikalık
+üretim. Onay özel modal'la alınır.
+
 ## Denge değiştirirken dikkat
 
-- Sabitler `game.js` başındaki tanım bloklarında toplu duruyor.
+- Sabitler `game.js` ve `combat.js` başındaki tanım bloklarında toplu duruyor.
 - Bir üreticinin `baseRate`'ini değiştirmek tüm geç-oyun ekonomisini kaydırır.
 - `costGrowth`'u türler arası tutarlı tut (1.15) — aksi halde bazı üreticiler
   "ölü seçenek" olur.
+- Boss zaman aşımı oranı (`BOSS_TIMEOUT_HEAL`) çok düşürülürse boss duvarı
+  anlamsızlaşır; çok yükseltilirse oyuncu yine "ilerleyemiyorum" hisseder.
+- Kritik formülünde 5 katsayısı (`sqrt(ringPct·5)`) — efsanevinin tavanı tek
+  başına dolurmaması için seçildi. Değiştirirken yüzüğün anlamlı kalmasına
+  dikkat et.

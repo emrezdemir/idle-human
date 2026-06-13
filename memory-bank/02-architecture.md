@@ -15,6 +15,7 @@ idle-human/
 │   ├── audio.js             # SFX modülü — Web Audio ile prosedürel ses
 │   ├── effects.js           # Effects modülü — canvas parçacık/efekt motoru (yedek)
 │   ├── effects-pixi.js      # Pixi/WebGL efekt motoru; varsa Effects'i değiştirir
+│   ├── combat.js            # window.Combat — savaş runtime + boss + ekipman + reroll
 │   ├── cloud.js             # Cloud modülü — hesap + bulut kayıt soyutlaması
 │   ├── vendor/pixi.min.js   # PixiJS v7 (UMD) — fullscreen efekt motoru (offline)
 │   ├── manifest.json        # PWA manifesti
@@ -47,6 +48,7 @@ Sıra önemlidir — `game.js` diğerlerine bağımlıdır:
 <script src="effects.js"></script>   <!-- window.Effects (canvas yedek) -->
 <script src="effects-pixi.js"></script> <!-- WebGL varsa Effects'i Pixi ile değiştirir -->
 <script src="cloud.js"></script>     <!-- window.Cloud -->
+<script src="combat.js"></script>    <!-- window.Combat (savaş + ekipman) -->
 <script src="game.js"></script>      <!-- hepsini kullanır, init eder -->
 ```
 
@@ -78,7 +80,12 @@ elle artırılır ve `changelog`'a en üste bir kayıt eklenir.
 game.js
  ├─ window.SFX      (ses; yoksa sessizce atlanır)
  ├─ window.Effects  (görsel; yoksa sessizce atlanır)
+ ├─ window.Combat   (savaş + ekipman; yoksa savaş paneli boş kalır)
  └─ window.Cloud    (hesap/kayıt; yoksa yalnız yerel kayıt)
+
+`window.Combat`, `init({ getState, clickPower, totalPerSecond, spawnFloatText,
+enemyCenter, showToast, say, randomFrom, fmt, renderResource, onRerollClick })`
+ile beslenir — game.js'in iç fonksiyonlarına bağımlı olduğu için DI ile bağlanır.
 ```
 
 Her bağımlılık **opsiyoneldir**: `game.js` her çağrıdan önce `if (window.X)`
@@ -129,11 +136,18 @@ Tek bir `state` nesnesi her şeyi tutar (bkz. `newState()` — `game.js`):
 
 ## Kayıt / yükleme
 
-- Anahtar: `SAVE_KEY = "idle-human-save-v1"`.
-- `save()` → `JSON.stringify(state)` → localStorage.
+- Anahtarlar: `SAVE_KEY = "idle-human-save-v1"` + `SAVE_KEY_PREV` (yedek rotasyonu).
+- `save()` → mevcut kaydı `_prev`'e taşı, sonra yeni `state`'i ana anahtara yaz.
+- `load()` → önce ana kayıt, başarısızsa `_prev` denenir. Şema doğrulama
+  (`isValidSaveData`): sayısal alanların `finite` ve `>= 0`, owned/upgrades/
+  unlocked'ın nesne olduğu kontrol edilir; bozuksa yedeğe düşülür.
 - `load()` → `Object.assign(newState(), data)` ile **ileri uyumluluk**: yeni alanlar
   varsayılanından gelir, eski kayıtlar bozulmaz.
 - **Offline kazanç:** `applyOfflineProgress()` `lastSeen`'den bu yana geçen süreyi
   alıp pasif üretimi geri verir (10 sn altını yok sayar).
 - **Yedek kodu:** `Cloud.encodeCode(state)` tüm kaydı Base64 metne çevirir; başka
-  cihazda `decodeCode` ile geri yüklenir.
+  cihazda `decodeCode` ile geri yüklenir. `applySaveString` da `isValidSaveData`
+  ile aynı şema doğrulamasını yapar — kötü amaçlı/bozuk yedek state'i kirletmez.
+- **Yıkıcı işlemler özel modal'la onaylanır:** prestij, sıfırla, geri yükle, reroll
+  artık native `confirm()`/`prompt()` değil, `#confirmModal` + `#restoreModal`
+  kullanır (`showConfirm({title, message, okLabel, danger, onOk})`).

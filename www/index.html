@@ -130,7 +130,7 @@
           <button class="equip-card" id="equip-armor"></button>
           <button class="equip-card" id="equip-ring"></button>
         </div>
-        <p class="equip-hint">Ekipman <strong>boss'ları yenince</strong> düşer. Daha güçlüsü otomatik kuşanılır. ⚔️ tık hasarı · 🛡️ üretim · 💍 kritik şansı.</p>
+        <p class="equip-hint">Ekipman <strong>boss'ları yenince</strong> düşer. Daha güçlüsü otomatik kuşanılır. ⚔️ tık hasarı · 🛡️ üretim · 💍 kritik şansı.<br />Slota dokunarak <strong>🔁 yeniden çek</strong> — şansını rastgele yeni nadirlikle dene.</p>
       </section>
       <section id="achievements" class="tab-panel">
         <p class="ach-summary"><span id="achCount">0</span>/<span id="achTotal">0</span> başarım · <span id="achBonus">+%0</span> üretim bonusu</p>
@@ -315,6 +315,31 @@
     </div>
   </div>
 
+  <!-- Genel onay modal'ı: prestij, sıfırla, reroll, geri yükle gibi yıkıcı işlemler -->
+  <div id="confirmModal" class="modal hidden">
+    <div class="modal-card confirm-card">
+      <h2 id="confirmTitle">Onay</h2>
+      <p id="confirmMessage" class="confirm-message"></p>
+      <div class="confirm-actions">
+        <button id="confirmCancel" class="ghost-button">İptal</button>
+        <button id="confirmOk" class="primary-button">Devam</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Yedek kodu geri yükleme modal'ı (native prompt yerine) -->
+  <div id="restoreModal" class="modal hidden">
+    <div class="modal-card restore-card">
+      <h2>📥 Yedek Kodundan Geri Yükle</h2>
+      <p class="restore-help">Yedek kodunu aşağıya yapıştır. Mevcut ilerlemen üzerine yazılacak.</p>
+      <textarea id="restoreInput" class="save-code-area" placeholder="Kodu buraya yapıştır"></textarea>
+      <div class="confirm-actions">
+        <button id="restoreCancel" class="ghost-button">İptal</button>
+        <button id="restoreConfirm" class="primary-button">Geri Yükle</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
 
   <script src="vendor/pixi.min.js"></script>
@@ -325,6 +350,7 @@
   <script src="effects.js"></script>
   <script src="effects-pixi.js"></script>
   <script src="cloud.js"></script>
+  <script src="combat.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

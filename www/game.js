@@ -6,6 +6,7 @@
 "use strict";
 
 const SAVE_KEY = "idle-human-save-v1";
+const SAVE_KEY_PREV = "idle-human-save-v1_prev"; // önceki kaydın yedeği (rotasyon)
 const TICK_MS = 100; // oyun döngüsü (saniyede 10 kez)
 
 /* --- Tanımlar --------------------------------------------------------- */
@@ -124,57 +125,9 @@ function eraMultiplier() {
   return m;
 }
 
-/* --- Savaş (idle combat) ---------------------------------------------
-   Dokunmak ve pasif üretim düşmana hasar verir; düşman ölünce ödül +
-   Stage ilerler. Her BOSS_EVERY aşamada bir BOSS (çok can + süre sınırı);
-   yenilen her boss kalıcı +%5 üretim verir (bossWins). Boss süre dolarsa
-   iyileşir (tekrar) — ilerlemeyi geçici durduran "duvar". */
-const ENEMY_BASE_HP = 8;
-const ENEMY_HP_GROWTH = 1.45;
-const BOSS_EVERY = 10;
-const BOSS_HP_MULT = 6;
-const BOSS_TIME = 30000; // ms
-const BOSS_BONUS = 0.05; // her boss kalıcı +%5 üretim
-
-function isBossStage(s) { return s % BOSS_EVERY === 0; }
-function enemyTier(s) { return Math.floor((s - 1) / BOSS_EVERY); }
-function enemyMaxHp(s) {
-  let hp = ENEMY_BASE_HP * Math.pow(ENEMY_HP_GROWTH, s - 1);
-  if (isBossStage(s)) hp *= BOSS_HP_MULT;
-  return hp;
-}
-// Yenilen boss başına kalıcı üretim çarpanı.
-function bossMultiplier() { return 1 + (state.bossWins || 0) * BOSS_BONUS; }
-
-/* --- Ekipman (boss loot) ---------------------------------------------- */
-// Slotlar: silah=tık hasarı, zırh=üretim, yüzük=kritik şansı.
-const SLOTS = [
-  { id: "weapon", name: "Silah", icon: "⚔️", stat: "tap",  statLabel: "hasar" },
-  { id: "armor",  name: "Zırh",  icon: "🛡️", stat: "prod", statLabel: "üretim" },
-  { id: "ring",   name: "Yüzük", icon: "💍", stat: "crit", statLabel: "kritik" },
-];
-const RARITIES = [
-  { id: "common",    name: "Sıradan",  color: "#9aa0aa", mult: 1, weight: 58 },
-  { id: "rare",      name: "Nadir",    color: "#4aa3ff", mult: 2, weight: 28 },
-  { id: "epic",      name: "Destansı", color: "#b45aff", mult: 4, weight: 11 },
-  { id: "legendary", name: "Efsanevi", color: "#ffb33a", mult: 8, weight: 3 },
-];
-function rarityById(id) { return RARITIES.find((r) => r.id === id) || RARITIES[0]; }
-function slotById(id) { return SLOTS.find((s) => s.id === id) || SLOTS[0]; }
-
-// Bir ekipman parçasının güç (% bonus) değeri: nadirlik × aşamayla ölçek.
-function piecePower(rarityMult, stage) {
-  return Math.round((4 + stage * 0.6) * rarityMult);
-}
-
-// Kuşanılı ekipmandan gelen çarpanlar.
-function equipPct(slot) {
-  const p = state.equip && state.equip[slot];
-  return p ? p.power : 0;
-}
-function equipTapMult() { return 1 + equipPct("weapon") / 100; }
-function equipProdMult() { return 1 + equipPct("armor") / 100; }
-function critChance() { return Math.min(60, equipPct("ring")); } // % (tavan 60)
+/* --- Savaş + ekipman ------------------------------------------------
+   Mantığı www/combat.js'te (window.Combat). game.js sadece bağlayıcı
+   yardımcıları geçer (state erişimi, clickPower, fmt, modal). */
 
 /* --- Oyun durumu ------------------------------------------------------ */
 
@@ -279,7 +232,8 @@ function achievementMultiplier() {
 
 // Üretime ve dokunuşa uygulanan toplam küresel çarpan.
 function globalMultiplier() {
-  return geneMultiplier() * achievementMultiplier() * eraMultiplier() * bossMultiplier();
+  const bossM = window.Combat ? window.Combat.bossMultiplier() : 1;
+  return geneMultiplier() * achievementMultiplier() * eraMultiplier() * bossM;
 }
 
 // Şu an prestij yapılırsa kazanılacak gen sayısı.
@@ -295,7 +249,8 @@ function baseClickPower() {
   UPGRADES.forEach((u) => {
     if (u.type === "click" && state.upgrades[u.id]) power *= u.mult;
   });
-  return power * globalMultiplier() * equipTapMult();
+  const equipTap = window.Combat ? window.Combat.equipTapMult() : 1;
+  return power * globalMultiplier() * equipTap;
 }
 
 // Bir dokunuşun gerçek kazancı: temel güç × anlık kombo çarpanı.
@@ -310,7 +265,8 @@ function generatorRate(gen) {
     if (u.type === "all") rate *= u.mult;
     if (u.type === "gen" && u.targetId === gen.id) rate *= u.mult;
   });
-  return rate * globalMultiplier() * equipProdMult();
+  const equipProd = window.Combat ? window.Combat.equipProdMult() : 1;
+  return rate * globalMultiplier() * equipProd;
 }
 
 function totalPerSecond() {
@@ -410,13 +366,15 @@ function doPrestige() {
     showToast("Henüz yeterli ilerleme yok");
     return;
   }
-  if (
-    !confirm(
-      `Yeniden doğacaksın!\n\n+${fmt(gain)} Gen kazanacaksın (kalıcı +%${gain * GENE_BONUS * 100} üretim).\n\nPuanların, üreticilerin ve yükseltmelerin sıfırlanacak. Genlerin kalır.\n\nEmin misin?`
-    )
-  )
-    return;
+  showConfirm({
+    title: "🧬 Yeniden Doğ",
+    message: `+${fmt(gain)} Gen kazanacaksın (kalıcı +%${Math.round(gain * GENE_BONUS * 100)} üretim).\nPuanların, üreticilerin ve yükseltmelerin sıfırlanır.\nGenler, çağlar, ekipman ve aşama korunur.`,
+    okLabel: "Yeniden Doğ",
+    onOk: () => doPrestigeNow(gain),
+  });
+}
 
+function doPrestigeNow(gain) {
   const keptGenes = state.genes + gain;
   const keptTotal = state.totalEarned;
   const keptPrestiges = state.prestiges + 1;
@@ -505,7 +463,8 @@ function performClick(x, y, quiet) {
   let gain = clickPower();
   if (turboActive()) gain *= TURBO_MULT;
   // Kritik (yüzük): şansla ×3 hasar
-  const isCrit = Math.random() * 100 < critChance();
+  const crit = window.Combat ? window.Combat.critChance() : 0;
+  const isCrit = Math.random() * 100 < crit;
   if (isCrit) gain *= 3;
   state.population += gain;
   state.totalEarned += gain;
@@ -515,11 +474,16 @@ function performClick(x, y, quiet) {
   if (!quiet) spawnFloatText(x, y, "+" + fmt(gain));
   triggerClickFx(x, y);
   // Savaş: dokunuş düşmana hasar verir + hasar sayısı göster
-  if (enemyMax > 0 && !quiet) {
+  if (window.Combat && window.Combat.hasEnemy() && !quiet) {
     const e = enemyCenter();
-    spawnDamageText(e.x + (Math.random() * 30 - 15), e.y - 10, (isCrit ? "KRİTİK " : "") + "-" + fmt(gain), isCrit);
+    spawnDamageText(
+      e.x + (Math.random() * 30 - 15),
+      e.y - 10,
+      (isCrit ? "KRİTİK " : "") + "-" + fmt(gain),
+      isCrit
+    );
   }
-  dealDamage(gain);
+  if (window.Combat) window.Combat.dealDamage(gain);
   if (window.Scene2D) Scene2D.hitEnemy();
   renderResource();
 }
@@ -750,7 +714,11 @@ function checkEra() {
   renderEra();
   showEraPopup(target);
   say(randomFrom(ERA_QUIPS[ERAS[target].id] || GENERIC_QUIPS), 4000);
-  if (state.soundOn && window.SFX) SFX.prestige();
+  if (state.soundOn && window.SFX) {
+    // Önce kısa milestone çanı (eskiden rezerveydi), sonra epik prestij süpürmesi.
+    if (SFX.milestone) SFX.milestone();
+    SFX.prestige();
+  }
   if (window.Effects) {
     Effects.confetti({ count: 120 });
     Effects.screenShake(8);
@@ -862,18 +830,26 @@ function currentSaveString() {
 // Bir yedek kaydı/metni uygula (geri yükleme).
 function applySaveString(saveString) {
   const data = JSON.parse(saveString);
-  if (!data || typeof data !== "object") throw new Error("geçersiz veri");
+  if (!isValidSaveData(data)) throw new Error("geçersiz veri");
   state = Object.assign(newState(), data);
   GENERATORS.forEach((g) => {
     if (typeof state.owned[g.id] !== "number") state.owned[g.id] = 0;
   });
   sanitizeEra();
+  // Savaş alanlarını da tutarlı hale getir
+  if (typeof state.stage !== "number" || state.stage < 1 || isNaN(state.stage)) state.stage = 1;
+  if (typeof state.bossWins !== "number" || state.bossWins < 0) state.bossWins = 0;
+  state.equip = Object.assign({ weapon: null, armor: null, ring: null }, state.equip || {});
   save(false);
   renderShops();
   updateAvatar();
   applyEraTheme();
   renderResource();
   renderAchievements();
+  if (window.Combat) {
+    window.Combat.renderEquipment();
+    window.Combat.initEnemy();
+  }
   applyAudioPrefs();
 }
 
@@ -965,21 +941,39 @@ function copySaveCode() {
 }
 
 function restoreSaveCode() {
+  // Önceki: native prompt() + confirm(). Yeni: özel modal (mobilde tutarlı).
+  openRestoreModal();
+}
+
+function openRestoreModal() {
+  const ta = document.getElementById("restoreInput");
+  if (ta) ta.value = "";
+  document.getElementById("restoreModal").classList.remove("hidden");
+}
+
+function performRestore() {
+  const ta = document.getElementById("restoreInput");
   const codeArea = document.getElementById("saveCodeArea");
-  if (!codeArea) return;
-  const code = prompt("Yedek kodunu yapıştır:");
-  if (!code) return;
-  try {
-    const saveString = Cloud.decodeCode(code);
-    if (!confirm("Mevcut ilerlemenin üzerine bu kayıt yazılacak. Devam edilsin mi?")) {
-      return;
-    }
-    applySaveString(saveString);
-    showToast("📥 İlerleme geri yüklendi");
-    codeArea.value = Cloud.encodeCode(currentSaveString());
-  } catch (e) {
-    showToast("⚠️ Geçersiz kod");
-  }
+  const code = ta && ta.value.trim();
+  if (!code) { showToast("Önce kodu yapıştır"); return; }
+  let saveString;
+  try { saveString = Cloud.decodeCode(code); }
+  catch (e) { showToast("⚠️ Geçersiz kod"); return; }
+  showConfirm({
+    title: "📥 Geri Yükle",
+    message: "Mevcut ilerlemenin üzerine bu kayıt yazılacak.",
+    okLabel: "Geri Yükle",
+    onOk: () => {
+      try {
+        applySaveString(saveString);
+        showToast("📥 İlerleme geri yüklendi");
+        if (codeArea) codeArea.value = Cloud.encodeCode(currentSaveString());
+        document.getElementById("restoreModal").classList.add("hidden");
+      } catch (e) {
+        showToast("⚠️ Kayıt verisi geçersiz");
+      }
+    },
+  });
 }
 
 function renderResource() {
@@ -1040,17 +1034,39 @@ function gameLoop() {
   checkEra();
   checkAchievements();
   // Savaş: pasif üretim otomatik saldırır + boss süresi + HUD
-  dealDamage(totalPerSecond() * dt);
-  checkBossTimeout();
-  renderCombat();
+  if (window.Combat) {
+    window.Combat.dealDamage(totalPerSecond() * dt);
+    window.Combat.checkBossTimeout();
+    window.Combat.renderCombat();
+  }
   renderResource();
 }
 
 /* --- Kaydetme / yükleme ----------------------------------------------- */
 
+// Kaydı doğrula: ana sayısal alanların düzgün olup olmadığını kontrol et.
+// Bozulmuş bir kaydı yanlışlıkla state'e yazmak yerine reddedebilmek için.
+function isValidSaveData(d) {
+  if (!d || typeof d !== "object") return false;
+  const nums = ["population", "totalEarned", "runEarned", "clicks", "genes", "prestiges"];
+  for (const k of nums) {
+    if (k in d) {
+      const v = d[k];
+      if (typeof v !== "number" || !isFinite(v) || v < 0) return false;
+    }
+  }
+  if ("owned" in d && (!d.owned || typeof d.owned !== "object")) return false;
+  if ("upgrades" in d && (!d.upgrades || typeof d.upgrades !== "object")) return false;
+  if ("unlocked" in d && (!d.unlocked || typeof d.unlocked !== "object")) return false;
+  return true;
+}
+
 function save(showMessage) {
   state.lastSeen = Date.now();
   try {
+    // Önceki sağlam kayıt varsa onu _prev'e taşı (rotasyon yedek).
+    const existing = localStorage.getItem(SAVE_KEY);
+    if (existing) localStorage.setItem(SAVE_KEY_PREV, existing);
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
     if (showMessage) showToast("💾 Kaydedildi");
   } catch (e) {
@@ -1059,20 +1075,33 @@ function save(showMessage) {
 }
 
 function load() {
-  try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-    state = Object.assign(newState(), data);
-    // Eksik üretici alanlarını tamamla (versiyon güncellemelerine karşı)
-    GENERATORS.forEach((g) => {
-      if (typeof state.owned[g.id] !== "number") state.owned[g.id] = 0;
-    });
-    sanitizeEra();
-    return true;
-  } catch (e) {
-    return false;
+  // Önce ana kaydı dene; bozuksa otomatik _prev'e düş.
+  const tryKey = (key) => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!isValidSaveData(data)) return null;
+      return data;
+    } catch (e) { return null; }
+  };
+  let data = tryKey(SAVE_KEY);
+  let restoredFromBackup = false;
+  if (!data) {
+    data = tryKey(SAVE_KEY_PREV);
+    if (data) restoredFromBackup = true;
   }
+  if (!data) return false;
+  state = Object.assign(newState(), data);
+  // Eksik üretici alanlarını tamamla (versiyon güncellemelerine karşı)
+  GENERATORS.forEach((g) => {
+    if (typeof state.owned[g.id] !== "number") state.owned[g.id] = 0;
+  });
+  sanitizeEra();
+  if (restoredFromBackup) {
+    setTimeout(() => showToast("⚠️ Ana kayıt bozuktu — yedekten yüklendi"), 800);
+  }
+  return true;
 }
 
 function applyOfflineProgress() {
@@ -1107,14 +1136,71 @@ function formatDuration(seconds) {
 }
 
 function hardReset() {
-  if (!confirm("Tüm ilerlemen silinecek. Emin misin?")) return;
-  localStorage.removeItem(SAVE_KEY);
-  state = newState();
-  renderShops();
-  updateAvatar();
-  applyEraTheme();
-  renderResource();
-  showToast("♻️ Oyun sıfırlandı");
+  showConfirm({
+    title: "♻️ Oyunu Sıfırla",
+    message: "Tüm ilerlemen silinecek (genler, çağlar, ekipman dahil). Bu işlem geri alınamaz.",
+    okLabel: "Sıfırla",
+    danger: true,
+    onOk: () => {
+      localStorage.removeItem(SAVE_KEY);
+      localStorage.removeItem(SAVE_KEY_PREV);
+      state = newState();
+      renderShops();
+      updateAvatar();
+      applyEraTheme();
+      renderResource();
+      if (window.Combat) {
+        window.Combat.renderEquipment();
+        window.Combat.initEnemy();
+      }
+      showToast("♻️ Oyun sıfırlandı");
+    },
+  });
+}
+
+/* --- Genel onay modal'ı (native confirm yerine) ---------------------
+   showConfirm({title, message, okLabel, danger, onOk, onCancel})
+   Tek bir #confirmModal'ı yeniden kullanır — basit, stillerle tutarlı. */
+let confirmPending = null;
+function showConfirm(opts) {
+  confirmPending = opts || {};
+  document.getElementById("confirmTitle").textContent = opts.title || "Onay";
+  document.getElementById("confirmMessage").textContent = opts.message || "";
+  const ok = document.getElementById("confirmOk");
+  ok.textContent = opts.okLabel || "Devam";
+  ok.classList.toggle("danger", !!opts.danger);
+  document.getElementById("confirmModal").classList.remove("hidden");
+}
+function closeConfirm(commit) {
+  const opts = confirmPending;
+  confirmPending = null;
+  document.getElementById("confirmModal").classList.add("hidden");
+  if (!opts) return;
+  if (commit && opts.onOk) opts.onOk();
+  else if (!commit && opts.onCancel) opts.onCancel();
+}
+
+// Ekipman kartına tıklayınca açılır: reroll onayı.
+function openRerollConfirm(slotId) {
+  if (!window.Combat) return;
+  const slot = window.Combat.SLOTS.find((s) => s.id === slotId);
+  if (!slot) return;
+  if (!state.equip || !state.equip[slotId]) {
+    showToast("Önce bir boss yenmelisin");
+    return;
+  }
+  const cost = window.Combat.rerollCost();
+  if (state.population < cost) {
+    showToast(`Yetersiz puan · ${fmt(cost)} gerek`);
+    return;
+  }
+  const cur = state.equip[slotId];
+  showConfirm({
+    title: `🔁 ${slot.name} Yeniden Çek`,
+    message: `Mevcut: +${cur.power}% ${slot.statLabel}\nBedel: ${fmt(cost)} puan (≈60 sn üretim).\nYeni parça rastgele nadirlik + güçle gelir. Eski parça kaybolur.`,
+    okLabel: `Yeniden Çek · ${fmt(cost)}`,
+    onOk: () => window.Combat.rerollEquipment(slotId),
+  });
 }
 
 /* --- Toast ------------------------------------------------------------- */
@@ -1332,123 +1418,7 @@ function scheduleTurbo() {
   }, 95000 + Math.random() * 130000); // ~1.5–3.7 dk arası
 }
 
-/* --- Savaş çalışma-zamanı --------------------------------------------- */
-
-let enemyHp = 0, enemyMax = 0, bossUntil = 0;
-
-function initEnemy() {
-  enemyMax = enemyMaxHp(state.stage);
-  enemyHp = enemyMax;
-  const boss = isBossStage(state.stage);
-  bossUntil = boss ? Date.now() + BOSS_TIME : 0;
-  if (window.Scene2D) {
-    Scene2D.setEnemy(enemyTier(state.stage), boss);
-    renderCombat();
-  }
-}
-
-function renderCombat() {
-  if (!window.Scene2D) return;
-  const boss = isBossStage(state.stage);
-  Scene2D.setHp(enemyMax > 0 ? enemyHp / enemyMax : 0);
-  Scene2D.setStage(state.stage, boss);
-  Scene2D.setBossTimer(boss && enemyMax > 0 ? Math.max(0, (bossUntil - Date.now()) / 1000) : null);
-}
-
-// Bir öldürmenin puan ödülü (ekonomiyi bozmayacak, üretimle orantılı).
-function killReward() {
-  return Math.max(1, clickPower() * 2, totalPerSecond() * 3);
-}
-
-function dealDamage(dmg) {
-  if (dmg <= 0 || enemyMax <= 0) return;
-  enemyHp -= dmg;
-  if (enemyHp <= 0) killEnemy();
-}
-
-function killEnemy() {
-  const boss = isBossStage(state.stage);
-  enemyMax = 0; // ölüm animasyonu sırasında tekrar tetiklenmesin
-  let reward = killReward();
-  if (boss) {
-    reward *= 5;
-    state.bossWins = (state.bossWins || 0) + 1;
-    showToast("👑 Boss yenildi! Kalıcı +%5 üretim");
-    say(randomFrom(["Boss düştü! 💪", "Bir duvar daha aştık!", "Kimse bizi durduramaz!"]), 3000);
-    if (window.Effects) { Effects.confetti({ count: 80 }); Effects.screenShake(8); }
-    if (state.soundOn && window.SFX && SFX.milestone) SFX.milestone();
-    dropEquipment(); // boss ganimeti
-  } else if (state.soundOn && window.SFX) {
-    SFX.buy();
-  }
-  state.population += reward;
-  state.totalEarned += reward;
-  state.runEarned += reward;
-  const e = enemyCenter();
-  spawnFloatText(e.x, e.y - 24, "+" + fmt(reward));
-  if (window.Effects) Effects.burst(e.x, e.y, { count: boss ? 24 : 12, power: boss ? 2 : 1.3 });
-  if (window.Scene2D) Scene2D.enemyDie();
-  state.stage += 1;
-  setTimeout(initEnemy, 240); // ölüm animasyonundan sonra yeni düşman
-}
-
-// Boss yenince ekipman düşür (rastgele slot + ağırlıklı nadirlik).
-function dropEquipment() {
-  if (!state.equip) state.equip = { weapon: null, armor: null, ring: null };
-  const total = RARITIES.reduce((s, r) => s + r.weight, 0);
-  let roll = Math.random() * total, rar = RARITIES[0];
-  for (const r of RARITIES) { if (roll < r.weight) { rar = r; break; } roll -= r.weight; }
-  const slot = SLOTS[(Math.random() * SLOTS.length) | 0];
-  const power = piecePower(rar.mult, state.stage);
-  const cur = state.equip[slot.id];
-  const better = !cur || power > cur.power;
-  if (better) state.equip[slot.id] = { rarity: rar.id, power: power };
-  const tag = `${rar.name} ${slot.name}`;
-  if (better) {
-    showToast(`✨ ${tag}! +${power}% ${slot.statLabel}`);
-    if (rar.id === "legendary" || rar.id === "epic") {
-      say(rar.id === "legendary" ? "EFSANEVİ düştü! 🌟" : "Destansı parça! 🔥", 3000);
-      if (window.Effects) Effects.confetti({ count: rar.id === "legendary" ? 110 : 50 });
-    }
-  } else {
-    showToast(`${tag} düştü · mevcut daha iyi`);
-  }
-  renderEquipment();
-}
-
-// Ekipman panelini (3 slot) günceller.
-function renderEquipment() {
-  if (!state.equip) state.equip = { weapon: null, armor: null, ring: null };
-  SLOTS.forEach((slot) => {
-    const card = document.getElementById("equip-" + slot.id);
-    if (!card) return;
-    const p = state.equip[slot.id];
-    const r = p ? rarityById(p.rarity) : null;
-    card.style.borderColor = r ? r.color : "rgba(255,255,255,0.12)";
-    card.innerHTML = p
-      ? `<span class="equip-icon">${slot.icon}</span>
-         <span class="equip-body">
-           <span class="equip-rar" style="color:${r.color}">${r.name} ${slot.name}</span>
-           <span class="equip-stat">+${p.power}% ${slot.statLabel}</span>
-         </span>`
-      : `<span class="equip-icon dim">${slot.icon}</span>
-         <span class="equip-body">
-           <span class="equip-rar dim">${slot.name}</span>
-           <span class="equip-stat dim">boş · boss'tan düşer</span>
-         </span>`;
-  });
-  const cc = document.getElementById("equipCrit");
-  if (cc) cc.textContent = "Kritik şansı: %" + critChance();
-}
-
-// Boss süresi dolduysa iyileş (tekrar dene) — ilerleme duvarı.
-function checkBossTimeout() {
-  if (isBossStage(state.stage) && enemyMax > 0 && Date.now() > bossUntil) {
-    enemyHp = enemyMax;
-    bossUntil = Date.now() + BOSS_TIME;
-    say("Daha güçlü olmalıyız!", 2500);
-  }
-}
+/* --- Savaş çalışma-zamanı: artık combat.js'te (window.Combat) -------- */
 
 /* --- Başlat ------------------------------------------------------------ */
 
@@ -1474,12 +1444,27 @@ function init() {
     scene2dActive = window.Scene2D.mount(stageEl, state.era);
     if (scene2dActive) stageEl.addEventListener("click", handleClick);
   }
-  // Savaş: mevcut aşamanın düşmanını kur
+  // Savaş: mevcut aşamanın düşmanını kur (combat.js)
   if (typeof state.stage !== "number" || state.stage < 1 || isNaN(state.stage)) state.stage = 1;
   if (typeof state.bossWins !== "number" || state.bossWins < 0) state.bossWins = 0;
   state.equip = Object.assign({ weapon: null, armor: null, ring: null }, state.equip || {});
-  renderEquipment();
-  initEnemy();
+  if (window.Combat) {
+    window.Combat.init({
+      getState: () => state,
+      clickPower,
+      totalPerSecond,
+      spawnFloatText,
+      enemyCenter,
+      showToast,
+      say,
+      randomFrom,
+      fmt,
+      renderResource,
+      onRerollClick: openRerollConfirm,
+    });
+    window.Combat.renderEquipment();
+    window.Combat.initEnemy();
+  }
 
   if (loaded) applyOfflineProgress();
   renderAchievements();
@@ -1529,6 +1514,15 @@ function init() {
   document.getElementById("erasClose").addEventListener("click", () => hide("erasModal"));
   document.getElementById("eraModalClose").addEventListener("click", () => hide("eraModal"));
 
+  // Onay modal'ı (prestij, sıfırla, reroll, geri yükle paylaşır)
+  document.getElementById("confirmOk").addEventListener("click", () => closeConfirm(true));
+  document.getElementById("confirmCancel").addEventListener("click", () => closeConfirm(false));
+  // Geri yükleme modal'ı
+  document.getElementById("restoreCancel").addEventListener("click", () =>
+    document.getElementById("restoreModal").classList.add("hidden")
+  );
+  document.getElementById("restoreConfirm").addEventListener("click", performRestore);
+
   // Hesap / bulut kayıt arayüzü
   document.getElementById("accountButton").addEventListener("click", openAccountModal);
   document.getElementById("accountClose").addEventListener("click", () => {
@@ -1556,14 +1550,14 @@ function init() {
 
   // Savaş hissi: boşta bile ritimli otomatik saldırı (kahraman vurur, düşman tepki verir)
   setInterval(() => {
-    if (scene2dActive && enemyMax > 0 && !document.hidden && window.Scene2D) {
+    if (scene2dActive && window.Combat && window.Combat.hasEnemy() && !document.hidden && window.Scene2D) {
       Scene2D.tap();
       Scene2D.hitEnemy();
     }
   }, 560);
   // Düşman ara sıra karşı hamle yapar (çift taraflı kavga hissi)
   setInterval(() => {
-    if (scene2dActive && enemyMax > 0 && !document.hidden && window.Scene2D) Scene2D.enemyAttack();
+    if (scene2dActive && window.Combat && window.Combat.hasEnemy() && !document.hidden && window.Scene2D) Scene2D.enemyAttack();
   }, 2100);
 
   // Etkileşim: karakter ara sıra konuşur, ara sıra sürpriz turbo gelir

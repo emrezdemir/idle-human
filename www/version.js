@@ -10,11 +10,26 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.12.0",
+  version: "1.13.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.13.0",
+      title: "Cila paketi: reroll + güvenli kayıt + denge",
+      notes: [
+        "Ekipman slotuna dokun: 🔁 yeniden çek (≈60 sn üretim bedelle yeni nadirlik).",
+        "Boss can barı: gradient + düşük canda hafif pulse — gerginlik hissi.",
+        "Boss zaman aşımı artık tam iyileşmez — hasarın %35'i korunur (duvar yumuşadı).",
+        "Boss yenince ödül ×5 → ×10. Çağ atlamada milestone çanı (rezerve kaldırıldı).",
+        "Kritik şansı yüzükten azalan getiriyle çıkar — efsanevi yüzükle tek atışta tavanlamaz.",
+        "Native confirm/prompt kaldırıldı: prestij, sıfırla, geri yükle artık özel modal.",
+        "Otomatik kayıt yedek anahtarı (_prev) tutuyor — bozuk kayıttan otomatik kurtarma.",
+        "Yedek koduna şema doğrulama — kötü veri artık state'e yazılamaz.",
+        "Savaş + ekipman mantığı combat.js modülüne ayrıldı (game.js inceldi).",
+      ],
+    },
     {
       version: "1.12.0",
       title: "Boss ganimeti: ekipman + kritik (derinlik)",

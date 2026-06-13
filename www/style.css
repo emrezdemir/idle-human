@@ -311,15 +311,36 @@ main {
   overflow: hidden;
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
 }
-.scene-enemy.boss .scene-enemy-hp { width: 140px; }
+.scene-enemy.boss .scene-enemy-hp {
+  width: 160px;
+  height: 14px;
+  top: -10px;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4), 0 0 12px rgba(239, 71, 111, 0.45);
+}
 .scene-enemy-hp-fill {
   display: block;
   height: 100%;
   width: 100%;
   background: linear-gradient(90deg, #6fcf4a, #b6e84a);
   transition: width 0.12s linear;
+  position: relative;
 }
-.scene-enemy.boss .scene-enemy-hp-fill { background: linear-gradient(90deg, #ef476f, #ff9b6a); }
+.scene-enemy.boss .scene-enemy-hp-fill {
+  background: linear-gradient(90deg, #ef476f 0%, #ff9b6a 70%, #ffd166 100%);
+}
+/* Boss canı düşükken yumuşak pulse — gerginlik hissi */
+.scene-enemy.boss .scene-enemy-hp::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: bossHpPulse 1.4s ease-in-out infinite;
+}
+@keyframes bossHpPulse {
+  0%, 100% { box-shadow: inset 0 0 0 0 rgba(255, 80, 80, 0); }
+  50%      { box-shadow: inset 0 0 12px 1px rgba(255, 80, 80, 0.55); }
+}
 /* HUD: stage etiketi + boss sayacı */
 .scene-stage {
   position: absolute;
@@ -770,19 +791,77 @@ main {
   border: 2px solid rgba(255, 255, 255, 0.12);
   background: var(--panel);
   color: var(--text);
-  cursor: default;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
 }
+.equip-card:disabled { cursor: default; }
+.equip-card:not(:disabled):active { transform: scale(0.98); background: var(--panel-2); }
 .equip-icon { font-size: 1.7rem; flex: 0 0 auto; }
 .equip-icon.dim, .equip-rar.dim, .equip-stat.dim { opacity: 0.45; }
-.equip-body { display: flex; flex-direction: column; min-width: 0; }
+.equip-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .equip-rar { font-weight: 800; font-size: 0.95rem; }
 .equip-stat { font-size: 0.82rem; color: var(--text-dim); }
+/* Reroll etiketi: ekipman kartının sağ tarafında, dolulu slotta görünür */
+.equip-reroll {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(255, 209, 102, 0.12);
+  border: 1px solid rgba(255, 209, 102, 0.35);
+  border-radius: 999px;
+  padding: 4px 9px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.equip-card:disabled .equip-reroll { display: none; }
+.equip-card:not(:disabled):active .equip-reroll {
+  background: rgba(255, 209, 102, 0.22);
+}
 .equip-hint {
   margin: 14px 4px 0;
   color: var(--text-dim);
   font-size: 0.8rem;
   line-height: 1.5;
   text-align: center;
+}
+
+/* Onay modal'ı: prestij, sıfırla, reroll, geri yükle için ortak görünüm */
+.confirm-card { max-width: 360px; }
+.confirm-message {
+  color: var(--text-dim);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  white-space: pre-line;
+  margin: 8px 0 18px;
+}
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.confirm-actions .ghost-button,
+.confirm-actions .primary-button {
+  flex: 1;
+  min-width: 110px;
+}
+.primary-button.danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* Geri yükleme modal'ı: textarea ile yapıştır */
+.restore-card { max-width: 380px; }
+.restore-help {
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  margin: 6px 0 12px;
+}
+.restore-card .save-code-area {
+  width: 100%;
+  min-height: 110px;
+  margin-bottom: 14px;
 }
 
 @keyframes floatUp {
