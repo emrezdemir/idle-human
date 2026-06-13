@@ -57,7 +57,7 @@ sentezlenir. Hiçbir `.mp3/.wav` taşınmaz → paket küçük kalır.
 | `SFX.upgrade()` | yükseltme (4 notalı fanfar) |
 | `SFX.achievement()` | başarım (parlak arpej + tıngırtı) |
 | `SFX.prestige()` | prestij (epik süpürme + akor) |
-| `SFX.milestone()` | çağ/dönüm noktası çanı (şu an rezerve) |
+| `SFX.milestone()` | yumuşak çan — çağ atlamada ve boss yenince tetiklenir |
 | `SFX.startMusic()/stopMusic()` | çok kısık arka plan "pad" ambiyansı |
 
 ### Tarayıcı politikası

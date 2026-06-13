@@ -3,9 +3,11 @@
 ## Proje nedir?
 
 **Idle Human**, tek bir insandan başlayıp medeniyeti büyüten bir **idle / clicker**
-oyunudur. Oyuncu bir butona dokunarak "İnsanlık Puanı" kazanır, bu puanla pasif
-üretim yapan üreticiler ve çarpan veren yükseltmeler alır, belirli bir noktada
-"prestij" yaparak kalıcı bonuslarla yeniden başlar.
+oyunudur. Oyuncu bir butona dokunarak "İnsanlık Puanı" kazanır ve aynı anda
+düşmana saldırır; bu puanla pasif üretim yapan üreticiler (aynı zamanda otomatik
+DPS) ve çarpan veren yükseltmeler alır, her 10. aşamada **boss** ile savaşır
+(ödülünde ekipman düşer), belirli bir noktada "prestij" yaparak kalıcı bonuslarla
+yeniden başlar.
 
 ## Hedefler
 

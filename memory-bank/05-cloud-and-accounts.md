@@ -28,6 +28,20 @@ const saveString = Cloud.decodeCode(code);            // geri çözer
 - `"IH1:"` sürüm öneki — ileride format değişirse ayırt etmek için.
 - Unicode güvenli (`TextEncoder`/`TextDecoder` + `btoa`/`atob`).
 - UI: hesap penceresinde metin kutusu + "Kopyala" / "Geri Yükle" düğmeleri.
+- "Geri Yükle" artık native `prompt()` değil — özel `#restoreModal`
+  (textarea + iptal/onayla). Yapıştırılan kod önce `isValidSaveData`
+  şemasından geçer (v1.13.0); başarısızsa kullanıcıya hata gösterilir,
+  state'e dokunulmaz.
+
+## Yerel kayıt güvenliği (v1.13.0)
+
+- **Rotasyon:** `save()` mevcut kaydı `idle-human-save-v1_prev`'e taşıyıp
+  yeni kaydı `idle-human-save-v1`'e yazar. `load()` ana kayıt bozuksa
+  yedeği dener.
+- **Şema doğrulama:** `isValidSaveData(d)` sayısal alanların `finite`/`>= 0`
+  olduğunu, owned/upgrades/unlocked'ın nesne olduğunu kontrol eder.
+- Bozuk veri hem yerel diskten (gerçek kayıp/çakışma) hem yedek kodundan
+  (kötü amaçlı/eski) gelebilir — iki yol da aynı doğrulamadan geçer.
 
 ## Play Games katmanı (play)
 

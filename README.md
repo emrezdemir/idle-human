@@ -13,15 +13,20 @@ Tarayıcıda çalışır ve **Capacitor** ile Android APK'ya paketlenir.
 
 ## 🎮 Nasıl Oynanır
 
-- 🧑 butonuna **dokun** ve İnsanlık Puanı kazan.
+- 🧑 butonuna **dokun** — düşmana saldır, İnsanlık Puanı kazan.
 - Puanlarınla **Üreticiler** al — İşçi ve Çiftçi'den başlayıp Yapay Zekâ,
   Uzay Filosu, Gezegen Kolonisi ve **Dyson Küresi**'ne kadar uzanan 12 kademe
   (taş devri → uzay çağı). `×1 / ×10 / ×100 / MAKS` ile toplu al.
 - **Yükseltmeler** ile dokunuş gücünü veya üretimi katla.
+- **Aşama / Boss savaşı** — her aşamada düşman; her 10. aşamada **BOSS**
+  (süre sınırlı). Boss yenince ekipman düşer + kalıcı +%5 üretim.
+- **Ekipman (⚔️ sekmesi)** — Silah (hasar), Zırh (üretim), Yüzük (kritik
+  şansı). 4 nadirlik (Sıradan → Efsanevi). Slota dokun → **🔁 yeniden çek**.
 - **Prestij** sekmesinden yeniden doğup kalıcı **Gen** puanı kazan (her Gen
   +%10 üretim).
 - **Başarımları** aç; her başarım +%1 üretim bonusu verir.
-- Oyun otomatik kaydeder. Geri döndüğünde **offline kazancını** toplarsın.
+- Oyun otomatik kaydeder (rotasyonlu yedek ile). Geri döndüğünde **offline
+  kazancını** toplarsın.
 
 ## 💻 Yerelde Çalıştırma
 
@@ -29,18 +34,28 @@ Web dosyaları `www/` klasöründe. Statik dosyalar olduğu için `www/index.htm
 doğrudan tarayıcıda açabilirsin; ya da bir yerel sunucu çalıştır:
 
 ```bash
-npm run serve          # python3 -m http.server 8000 --directory www
+npm run serve          # cross-platform: npx http-server (otomatik tarayıcı açar)
 # Tarayıcıda: http://localhost:8000
+
+# Alternatifler (Python):
+npm run serve:py       # Mac/Linux (python3)
+npm run serve:py-win   # Windows (py launcher)
 ```
 
 ## ✨ Öne çıkanlar
 
+- **Idle savaş + boss** — üretim otomatik DPS; her 10. aşamada süre sınırlı
+  BOSS. Yenilen her boss kalıcı +%5 üretim verir.
+- **Ekipman + nadirlik + kritik** — boss'lardan ⚔️/🛡️/💍 düşer (Sıradan →
+  Efsanevi). Yüzükle kritik şansı (×3 hasar). Slota dokun → **reroll**.
 - **Kombo sistemi** — hızlı ardışık dokunuşlar komboyu büyütür, dokunuş gücünü
   %100'e kadar çarpar; ses ve efekt şiddeti komboyla artar.
 - **Görsel efektler** — arka plan parçacık alanı, tıklama patlamaları, konfeti,
   ekran sarsıntısı, buton parıltısı ve halka dalgaları (tek `<canvas>` üzerinde).
 - **Prosedürel ses** — dosyasız Web Audio; tüm efektler çalışma anında sentezlenir
-  + kısık arka plan ambiyansı.
+  + kısık arka plan ambiyansı + çağ atlamada milestone çanı.
+- **Güvenli kayıt** — otomatik rotasyonlu yedek; bozuk kayıtta otomatik
+  kurtarma. Yedek koduna şema doğrulama.
 - **Hesap & bulut kayıt** — taşınabilir yedek kodu (her yerde çalışır) +
   Google Play Games entegrasyonu için hazır katman.
 - `prefers-reduced-motion` desteği — hareket azaltma tercihine saygı duyar.
@@ -51,7 +66,8 @@ npm run serve          # python3 -m http.server 8000 --directory www
 | ----------------------- | ----------------------------------------------- |
 | `www/index.html`        | Arayüz iskeleti, script yükleme sırası          |
 | `www/style.css`         | Mobil öncelikli tasarım (karanlık tema) + efektler |
-| `www/game.js`           | Oyun mantığı, kayıt, offline, prestij, başarım, kombo |
+| `www/game.js`           | Oyun mantığı, kayıt, offline, prestij, başarım, kombo, modal'lar |
+| `www/combat.js`         | `Combat` — savaş runtime, boss, ekipman, reroll |
 | `www/audio.js`          | `SFX` — prosedürel ses motoru (Web Audio)       |
 | `www/effects.js`        | `Effects` — canvas parçacık/efekt motoru        |
 | `www/cloud.js`          | `Cloud` — hesap + bulut kayıt soyutlaması        |
@@ -126,6 +142,12 @@ kurulumu: **[docs/PLAY_GAMES.md](docs/PLAY_GAMES.md)**.
 - [x] Uygulama simgesi ve açılış ekranı
 - [x] CI ile otomatik imzalı derleme + GitHub Pages
 - [x] Bulut kayıt (taşınabilir yedek kodu + Play Games hazır katmanı)
+- [x] Idle savaş + boss sistemi (aşamalar, süre sınırlı boss)
+- [x] Ekipman + nadirlik + kritik (boss ganimeti)
+- [x] Reroll (ekipman yeniden çekme) + kritik azalan getiri dengelemesi
+- [x] Güvenli kayıt rotasyonu + JSON şema doğrulama
+- [x] Tüm yıkıcı işlemler için özel modal'lar (native confirm/prompt kaldırıldı)
 - [ ] Play Games native eklentisini bağla (bkz. `docs/PLAY_GAMES.md`)
+- [ ] Görevler / günlük hedefler sistemi
 
 Ayrıntılı yol haritası: [`memory-bank/08-roadmap.md`](memory-bank/08-roadmap.md).

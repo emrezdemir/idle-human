@@ -4,7 +4,9 @@
   "description": "Bir insandan başlayıp medeniyeti büyüten idle/clicker oyunu",
   "private": true,
   "scripts": {
-    "serve": "python3 -m http.server 8000 --directory www",
+    "serve": "npx --yes http-server www -p 8000 -c-1 -o",
+    "serve:py": "python3 -m http.server 8000 --directory www",
+    "serve:py-win": "py -m http.server 8000 --directory www",
     "cap:sync": "cap sync android",
     "cap:copy": "cap copy android",
     "cap:open": "cap open android",

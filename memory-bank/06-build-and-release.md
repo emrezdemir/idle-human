@@ -38,12 +38,18 @@ keyPassword=...
 
 ```bash
 npm ci                 # bağımlılıklar (lock'tan, tekrarlanabilir)
-npm run serve          # www/'i 8000'de servis et
+npm run serve          # www/'i 8000'de servis et (cross-platform: npx http-server)
+npm run serve:py       # alternatif: python3 -m http.server (Mac/Linux)
+npm run serve:py-win   # alternatif: py -m http.server (Windows)
 npm run cap:sync       # web -> android kopyala
 npm run android:debug  # imzasız debug APK
 npm run android:apk    # imzalı release APK
 npm run android:aab    # imzalı App Bundle (Play Store)
 ```
+
+> `serve` script'i `npx --yes http-server` kullanır — Windows, Mac, Linux'ta
+> aynı şekilde çalışır, otomatik tarayıcı açar (`-o`), cache'i kapatır (`-c-1`).
+> İlk çalıştırmada http-server paketi tek seferlik indirilir.
 
 Çıktılar:
 - Debug APK: `android/app/build/outputs/apk/debug/app-debug.apk`

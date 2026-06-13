@@ -75,29 +75,47 @@ Bunlar hem **Actions → ilgili çalışma → Artifacts** altında, hem de
 **Kısa açıklama** (en fazla 80 karakter):
 
 ```
-Bir hücreden başla, tıkla ve büyüt; bir insandan koca bir medeniyete uzan.
+Taş devrinden uzay çağına: tıkla, üret, boss'ları yen, medeniyeti büyüt.
 ```
 
 **Tam açıklama** (en fazla 4000 karakter):
 
 ```
-Idle Human, tek bir hücreden başlayıp insana ve oradan koca bir medeniyete
-uzanan sade ve bağımlılık yapan bir idle/clicker oyunudur.
+Idle Human, bir insandan başlayıp koca bir medeniyete uzanan sade ve
+bağımlılık yapan bir idle/clicker oyunudur. Taş devrinden uzay çağına.
 
-🧬 EVRİM
-Tek hücreden başla; tıkla, kaynak biriktir ve yaşamın bir sonraki aşamasına geç.
-Her katman yeni yükseltmeler ve dönüm noktaları açar.
+🧬 ÇAĞ YOLCULUĞU
+Taş Devri, Tarım Devrimi, Antik Çağ, Orta Çağ, Rönesans, Sanayi Devrimi,
+Bilgi Çağı, Uzay Çağı ve Galaktik Çağ — her çağda karakterin görünümü,
+mekan ve müzik değişir, kalıcı üretim çarpanı kazanırsın.
 
-⏳ IDLE ÜRETİM
-Oyun sen yokken de çalışır. Geri döndüğünde seni biriken kaynaklar bekler;
-böylece her oturumda ilerlemeni hissedersin.
+⚔️ IDLE SAVAŞ + BOSS
+Dokunmak artık saldırıdır: her aşamada bir düşman, her 10. aşamada ise
+süre sınırlı BOSS seni bekler. Oyun sen yokken bile otomatik savaşır.
+Yenilen her boss kalıcı +%5 üretim verir.
 
-⚡ YÜKSELTMELER
-Üretimini katlayan onlarca yükseltme. Stratejini kur, en verimli yolu bul,
-sayıların büyümesini izle.
+✨ EKİPMAN + NADİRLİK
+Boss'lardan Silah, Zırh ve Yüzük düşer; 4 nadirlik (Sıradan, Nadir,
+Destansı, Efsanevi). Yüzük kritik şansı verir (×3 hasar). Şansını
+beğenmedin mi? Slota dokun ve yeniden çek.
 
-💾 OTOMATİK KAYIT
-İlerlemen cihazında otomatik olarak kaydedilir. Kaldığın yerden devam et.
+⏳ IDLE ÜRETİM + OFFLINE KAZANÇ
+Oyun sen yokken de çalışır. Geri döndüğünde seni biriken puanlar bekler.
+
+⚡ YÜKSELTMELER + KOMBO
+Üretimini ve dokunuş gücünü katlayan onlarca yükseltme. Hızlı ardışık
+tıklamalarla kombo yap, ses ve efekt şiddeti seninle birlikte yükselsin.
+
+🧬 PRESTİJ
+Yeterince ilerleyince yeniden doğ: Gen biriktir, kalıcı +%10 üretim/Gen
+kazan. Çağların, ekipmanın ve boss zaferlerin korunur.
+
+🏆 BAŞARIMLAR
+20 başarım, her biri +%1 kalıcı üretim bonusu.
+
+💾 GÜVENLİ KAYIT
+Otomatik kayıt + yedek rotasyon; bozulmaya karşı korumalı. Yedek koduyla
+başka cihaza taşıyabilir, Play Games (varsa) ile buluta yedekleyebilirsin.
 
 🆓 TAMAMEN ÜCRETSİZ
 Reklam yok, uygulama içi satın alma yok, gizli ücret yok. Sadece oyna.
@@ -106,7 +124,8 @@ Reklam yok, uygulama içi satın alma yok, gizli ücret yok. Sadece oyna.
 İnternet bağlantısı olmadan da oynayabilirsin.
 
 Rahatlatıcı, zaman geçiren ve "bir tık daha" dedirten bir deneyim arıyorsan
-Idle Human tam sana göre. Hücreden medeniyete giden yolculuk seni bekliyor!
+Idle Human tam sana göre. Taş devrinden galaksilere uzanan yolculuk seni
+bekliyor!
 ```
 
 ### B.3 Grafik varlıklar
