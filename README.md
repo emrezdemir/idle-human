@@ -17,6 +17,9 @@ Tarayıcıda çalışır ve **Capacitor** ile Android APK'ya paketlenir.
 - Puanlarınla **Üreticiler** al — İşçi ve Çiftçi'den başlayıp Yapay Zekâ,
   Uzay Filosu, Gezegen Kolonisi ve **Dyson Küresi**'ne kadar uzanan 12 kademe
   (taş devri → uzay çağı). `×1 / ×10 / ×100 / MAKS` ile toplu al.
+- **Çağa bağlı açılış** — üreticiler ve yükseltmeler temasına uygun **çağda**
+  açılır (Yapay Zekâ → Bilgi Çağı, Dyson → Galaktik Çağ). Henüz açılmayanlar
+  soluk 🔒 kart olarak görünür; çağ atladıkça yenileri açılır.
 - **Yükseltmeler** ile dokunuş gücünü veya üretimi katla.
 - **Aşama / Boss savaşı** — her aşamada düşman; her 10. aşamada **BOSS**
   (süre sınırlı). Boss yenince ekipman düşer + kalıcı +%5 üretim.
@@ -44,6 +47,9 @@ npm run serve:py-win   # Windows (py launcher)
 
 ## ✨ Öne çıkanlar
 
+- **Çağa bağlı ilerleme** — üreticiler/yükseltmeler tematik çağda açılır; çağ
+  eşikleri üretici maliyet merdivenine hizalı (erken atlamayı engeller, akışı
+  bozmaz). Kilitliler soluk 🔒 kart olarak önünü gösterir.
 - **Idle savaş + boss** — üretim otomatik DPS; her 10. aşamada süre sınırlı
   BOSS. Yenilen her boss kalıcı +%5 üretim verir.
 - **Ekipman + nadirlik + kritik** — boss'lardan ⚔️/🛡️/💍 düşer (Sıradan →
@@ -147,6 +153,7 @@ kurulumu: **[docs/PLAY_GAMES.md](docs/PLAY_GAMES.md)**.
 - [x] Reroll (ekipman yeniden çekme) + kritik azalan getiri dengelemesi
 - [x] Güvenli kayıt rotasyonu + JSON şema doğrulama
 - [x] Tüm yıkıcı işlemler için özel modal'lar (native confirm/prompt kaldırıldı)
+- [x] Çağa bağlı üretici/yükseltme kilidi (tematik açılış + eşik hizalaması)
 - [ ] Play Games native eklentisini bağla (bkz. `docs/PLAY_GAMES.md`)
 - [ ] Görevler / günlük hedefler sistemi
 

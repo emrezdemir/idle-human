@@ -13,19 +13,21 @@ const TICK_MS = 100; // oyun döngüsü (saniyede 10 kez)
 
 // Otomatik üreticiler: saniyede pasif puan üretir.
 // cost = baseCost * (costGrowth ^ owned)
+// `era`: bu üreticinin açılması için ulaşılması gereken çağ indeksi (ERAS).
+// Çağa girilmeden üretici kilitli kalır — temayla tutarlı ilerleme.
 const GENERATORS = [
-  { id: "worker",    icon: "🧑‍🌾", name: "İşçi",          desc: "Elleriyle çalışır",            baseCost: 15,      costGrowth: 1.15, baseRate: 0.2 },
-  { id: "farmer",    icon: "🌾",   name: "Çiftçi",        desc: "Toprağı eker biçer",           baseCost: 100,     costGrowth: 1.15, baseRate: 1 },
-  { id: "craftsman", icon: "🔨",   name: "Zanaatkâr",     desc: "Aletler ve eşyalar üretir",    baseCost: 1100,    costGrowth: 1.15, baseRate: 8 },
-  { id: "merchant",  icon: "⚖️",   name: "Tüccar",        desc: "Ticaretle değer katar",        baseCost: 12000,   costGrowth: 1.15, baseRate: 47 },
-  { id: "scientist", icon: "🔬",   name: "Bilim İnsanı",  desc: "Bilgiyi ilerletir",            baseCost: 130000,  costGrowth: 1.15, baseRate: 260 },
-  { id: "engineer",  icon: "⚙️",   name: "Mühendis",      desc: "Makineler tasarlar",           baseCost: 1.4e6,   costGrowth: 1.15, baseRate: 1400 },
-  { id: "factory",   icon: "🏭",   name: "Fabrika",       desc: "Seri üretim yapar",            baseCost: 2.0e7,   costGrowth: 1.15, baseRate: 7800 },
-  { id: "ai",        icon: "🤖",   name: "Yapay Zekâ",    desc: "Her şeyi otomatikleştirir",    baseCost: 3.3e8,   costGrowth: 1.15, baseRate: 44000 },
-  { id: "robot",     icon: "🦾",   name: "Robot Ordusu",  desc: "Yorulmadan üretir",            baseCost: 5.0e9,   costGrowth: 1.15, baseRate: 260000 },
-  { id: "rocket",    icon: "🚀",   name: "Uzay Filosu",   desc: "Yıldızlara açılır",            baseCost: 7.5e10,  costGrowth: 1.15, baseRate: 1.6e6 },
-  { id: "colony",    icon: "🪐",   name: "Gezegen Kolonisi", desc: "Yeni dünyalar kurar",       baseCost: 1.0e12,  costGrowth: 1.15, baseRate: 9.0e6 },
-  { id: "dyson",     icon: "🌌",   name: "Dyson Küresi",  desc: "Bir yıldızın gücünü toplar",   baseCost: 1.5e13,  costGrowth: 1.15, baseRate: 5.5e7 },
+  { id: "worker",    icon: "🧑‍🌾", name: "İşçi",          desc: "Elleriyle çalışır",            baseCost: 15,      costGrowth: 1.15, baseRate: 0.2,    era: 0 },
+  { id: "farmer",    icon: "🌾",   name: "Çiftçi",        desc: "Toprağı eker biçer",           baseCost: 100,     costGrowth: 1.15, baseRate: 1,      era: 2 },
+  { id: "craftsman", icon: "🔨",   name: "Zanaatkâr",     desc: "Aletler ve eşyalar üretir",    baseCost: 1100,    costGrowth: 1.15, baseRate: 8,      era: 3 },
+  { id: "merchant",  icon: "⚖️",   name: "Tüccar",        desc: "Ticaretle değer katar",        baseCost: 12000,   costGrowth: 1.15, baseRate: 47,     era: 4 },
+  { id: "scientist", icon: "🔬",   name: "Bilim İnsanı",  desc: "Bilgiyi ilerletir",            baseCost: 130000,  costGrowth: 1.15, baseRate: 260,    era: 5 },
+  { id: "engineer",  icon: "⚙️",   name: "Mühendis",      desc: "Makineler tasarlar",           baseCost: 1.4e6,   costGrowth: 1.15, baseRate: 1400,   era: 6 },
+  { id: "factory",   icon: "🏭",   name: "Fabrika",       desc: "Seri üretim yapar",            baseCost: 2.0e7,   costGrowth: 1.15, baseRate: 7800,   era: 6 },
+  { id: "ai",        icon: "🤖",   name: "Yapay Zekâ",    desc: "Her şeyi otomatikleştirir",    baseCost: 3.3e8,   costGrowth: 1.15, baseRate: 44000,  era: 7 },
+  { id: "robot",     icon: "🦾",   name: "Robot Ordusu",  desc: "Yorulmadan üretir",            baseCost: 5.0e9,   costGrowth: 1.15, baseRate: 260000, era: 7 },
+  { id: "rocket",    icon: "🚀",   name: "Uzay Filosu",   desc: "Yıldızlara açılır",            baseCost: 7.5e10,  costGrowth: 1.15, baseRate: 1.6e6,  era: 8 },
+  { id: "colony",    icon: "🪐",   name: "Gezegen Kolonisi", desc: "Yeni dünyalar kurar",       baseCost: 1.0e12,  costGrowth: 1.15, baseRate: 9.0e6,  era: 8 },
+  { id: "dyson",     icon: "🌌",   name: "Dyson Küresi",  desc: "Bir yıldızın gücünü toplar",   baseCost: 1.5e13,  costGrowth: 1.15, baseRate: 5.5e7,  era: 9 },
 ];
 
 // Yükseltmeler: bir kez satın alınır, çarpan uygular.
@@ -33,20 +35,20 @@ const GENERATORS = [
 // type "all"    -> tüm pasif üretimi çarpar
 // type "gen"    -> belirli bir üreticinin üretimini çarpar (targetId)
 const UPGRADES = [
-  { id: "u_click_1", icon: "👆", name: "Güçlü Parmaklar",   desc: "Dokunuş gücü x2",            cost: 100,     type: "click", mult: 2 },
-  { id: "u_click_2", icon: "💪", name: "Demir İrade",       desc: "Dokunuş gücü x2",            cost: 5000,    type: "click", mult: 2 },
-  { id: "u_worker",  icon: "🧤", name: "İş Eldivenleri",    desc: "İşçi üretimi x2",            cost: 500,     type: "gen", targetId: "worker", mult: 2 },
-  { id: "u_farmer",  icon: "🚜", name: "Saban",             desc: "Çiftçi üretimi x2",          cost: 4000,    type: "gen", targetId: "farmer", mult: 2 },
-  { id: "u_all_1",   icon: "📜", name: "Yazının İcadı",     desc: "Tüm pasif üretim x2",        cost: 25000,   type: "all", mult: 2 },
-  { id: "u_sci",     icon: "🧪", name: "Laboratuvar",       desc: "Bilim İnsanı üretimi x3",    cost: 750000,  type: "gen", targetId: "scientist", mult: 3 },
-  { id: "u_all_2",   icon: "💡", name: "Aydınlanma",        desc: "Tüm pasif üretim x2",        cost: 5e6,     type: "all", mult: 2 },
-  { id: "u_click_3", icon: "⚡", name: "Sinir Hızlandırıcı", desc: "Dokunuş gücü x3",           cost: 2e7,     type: "click", mult: 3 },
-  { id: "u_all_3",   icon: "🌐", name: "Dijital Çağ",       desc: "Tüm pasif üretim x3",        cost: 1e9,     type: "all", mult: 3 },
-  { id: "u_ai",      icon: "🧠", name: "Sinir Ağı",         desc: "Yapay Zekâ üretimi x3",      cost: 5e10,    type: "gen", targetId: "ai", mult: 3 },
-  { id: "u_all_4",   icon: "🛰️", name: "Uzay Çağı",         desc: "Tüm pasif üretim x3",        cost: 1e12,    type: "all", mult: 3 },
-  { id: "u_robot",   icon: "🔧", name: "Otomasyon",         desc: "Robot Ordusu üretimi x3",    cost: 5e12,    type: "gen", targetId: "robot", mult: 3 },
-  { id: "u_click_4", icon: "✨", name: "Kuantum Dokunuş",   desc: "Dokunuş gücü x4",            cost: 5e13,    type: "click", mult: 4 },
-  { id: "u_all_5",   icon: "🌟", name: "Tip-1 Medeniyet",   desc: "Tüm pasif üretim x4",        cost: 5e14,    type: "all", mult: 4 },
+  { id: "u_click_1", icon: "👆", name: "Güçlü Parmaklar",   desc: "Dokunuş gücü x2",            cost: 100,     type: "click", mult: 2, era: 0 },
+  { id: "u_worker",  icon: "🧤", name: "İş Eldivenleri",    desc: "İşçi üretimi x2",            cost: 500,     type: "gen", targetId: "worker", mult: 2, era: 0 },
+  { id: "u_click_2", icon: "💪", name: "Demir İrade",       desc: "Dokunuş gücü x2",            cost: 5000,    type: "click", mult: 2, era: 2 },
+  { id: "u_farmer",  icon: "🚜", name: "Saban",             desc: "Çiftçi üretimi x2",          cost: 4000,    type: "gen", targetId: "farmer", mult: 2, era: 2 },
+  { id: "u_all_1",   icon: "📜", name: "Yazının İcadı",     desc: "Tüm pasif üretim x2",        cost: 25000,   type: "all", mult: 2, era: 3 },
+  { id: "u_sci",     icon: "🧪", name: "Laboratuvar",       desc: "Bilim İnsanı üretimi x3",    cost: 750000,  type: "gen", targetId: "scientist", mult: 3, era: 5 },
+  { id: "u_all_2",   icon: "💡", name: "Aydınlanma",        desc: "Tüm pasif üretim x2",        cost: 5e6,     type: "all", mult: 2, era: 5 },
+  { id: "u_click_3", icon: "⚡", name: "Sinir Hızlandırıcı", desc: "Dokunuş gücü x3",           cost: 2e7,     type: "click", mult: 3, era: 6 },
+  { id: "u_all_3",   icon: "🌐", name: "Dijital Çağ",       desc: "Tüm pasif üretim x3",        cost: 1e9,     type: "all", mult: 3, era: 7 },
+  { id: "u_ai",      icon: "🧠", name: "Sinir Ağı",         desc: "Yapay Zekâ üretimi x3",      cost: 5e10,    type: "gen", targetId: "ai", mult: 3, era: 7 },
+  { id: "u_robot",   icon: "🔧", name: "Otomasyon",         desc: "Robot Ordusu üretimi x3",    cost: 5e12,    type: "gen", targetId: "robot", mult: 3, era: 7 },
+  { id: "u_all_4",   icon: "🛰️", name: "Uzay Çağı",         desc: "Tüm pasif üretim x3",        cost: 1e12,    type: "all", mult: 3, era: 8 },
+  { id: "u_click_4", icon: "✨", name: "Kuantum Dokunuş",   desc: "Dokunuş gücü x4",            cost: 5e13,    type: "click", mult: 4, era: 9 },
+  { id: "u_all_5",   icon: "🌟", name: "Tip-1 Medeniyet",   desc: "Tüm pasif üretim x4",        cost: 5e14,    type: "all", mult: 4, era: 9 },
 ];
 
 // Başarımlar: koşul sağlanınca kalıcı açılır, her biri +%1 üretim verir.
@@ -90,17 +92,22 @@ function unlockedCount() {
    - mult: bu çağın eklediği kalıcı çarpan (çağ 0 = başlangıç, 1)
    - icon: hem tıklama butonundaki avatar hem göstergedeki simge
    - bg2: arka plan radyal degradesinin üst tonu (koyu kalır) */
+// Çağ eşikleri üretici maliyet merdivenine hizalandı (her çağ kendi
+// üreticisini açtığın an karşılayabileceğin şekilde): böylece üreticiler
+// temasına uygun çağda açılır (örn. Dyson ancak Galaktik Çağ'da). Eşikleri
+// değiştirirken GENERATORS.era eşleşmesini koru — aksi halde bir üretici ya
+// çok erken açılır ya da hiç karşılanamaz.
 const ERAS = [
-  { id: "stone",      name: "Taş Devri",        icon: "🧍",     threshold: 0,    mult: 1,    bg2: "#2a1a4f", story: "İnsanlık ateşi keşfetti. Uzun yolculuk başlıyor." },
-  { id: "hunter",     name: "Avcılık Çağı",     icon: "🏃",     threshold: 1e3,  mult: 1.6,  bg2: "#2e2218", story: "Sürülerin peşinde, mızrak elde — ilk avcı-toplayıcılar." },
-  { id: "agri",       name: "Tarım Devrimi",    icon: "🧑‍🌾",   threshold: 1e5,  mult: 1.7,  bg2: "#1f3a24", story: "Tohum toprakla buluştu; ilk köyler kuruldu." },
-  { id: "antiquity",  name: "Antik Çağ",        icon: "🧑‍🎓",   threshold: 1e7,  mult: 1.8,  bg2: "#3a3320", story: "Şehirler, yazı ve filozoflar doğdu." },
-  { id: "medieval",   name: "Orta Çağ",         icon: "💂",     threshold: 1e9,  mult: 1.9,  bg2: "#2a1f3a", story: "Şatolar yükseldi, loncalar ve krallıklar kuruldu." },
-  { id: "renaissance",name: "Rönesans",         icon: "🧑‍🎨",   threshold: 1e11, mult: 2.0,  bg2: "#3a2030", story: "Sanat ve bilim yeniden doğdu." },
-  { id: "industrial", name: "Sanayi Devrimi",   icon: "🧑‍🏭",   threshold: 1e13, mult: 2.2,  bg2: "#2b2b30", story: "Buhar ve çelik dünyayı dönüştürdü." },
-  { id: "info",       name: "Bilgi Çağı",       icon: "🧑‍💻",   threshold: 1e15, mult: 2.4,  bg2: "#15303a", story: "Bilgi ışık hızında akıyor; dünya birbirine bağlandı." },
-  { id: "space",      name: "Uzay Çağı",        icon: "🧑‍🚀",   threshold: 1e18, mult: 2.6,  bg2: "#1a1f3a", story: "İnsanlık yıldızlara açıldı." },
-  { id: "galactic",   name: "Galaktik Çağ",     icon: "🦾",     threshold: 1e21, mult: 3.0,  bg2: "#2a1040", story: "Galaksi artık eviniz. Tür sınırı aştı." },
+  { id: "stone",      name: "Taş Devri",        icon: "🧍",     threshold: 0,     mult: 1,    bg2: "#2a1a4f", story: "İnsanlık ateşi keşfetti. Uzun yolculuk başlıyor." },
+  { id: "hunter",     name: "Avcılık Çağı",     icon: "🏃",     threshold: 250,   mult: 1.6,  bg2: "#2e2218", story: "Sürülerin peşinde, mızrak elde — ilk avcı-toplayıcılar." },
+  { id: "agri",       name: "Tarım Devrimi",    icon: "🧑‍🌾",   threshold: 2.5e3, mult: 1.7,  bg2: "#1f3a24", story: "Tohum toprakla buluştu; ilk köyler kuruldu." },
+  { id: "antiquity",  name: "Antik Çağ",        icon: "🧑‍🎓",   threshold: 3e4,   mult: 1.8,  bg2: "#3a3320", story: "Şehirler, yazı ve filozoflar doğdu." },
+  { id: "medieval",   name: "Orta Çağ",         icon: "💂",     threshold: 4e5,   mult: 1.9,  bg2: "#2a1f3a", story: "Şatolar yükseldi, loncalar ve krallıklar kuruldu." },
+  { id: "renaissance",name: "Rönesans",         icon: "🧑‍🎨",   threshold: 5e6,   mult: 2.0,  bg2: "#3a2030", story: "Sanat ve bilim yeniden doğdu." },
+  { id: "industrial", name: "Sanayi Devrimi",   icon: "🧑‍🏭",   threshold: 6e7,   mult: 2.2,  bg2: "#2b2b30", story: "Buhar ve çelik dünyayı dönüştürdü." },
+  { id: "info",       name: "Bilgi Çağı",       icon: "🧑‍💻",   threshold: 1.2e9, mult: 2.4,  bg2: "#15303a", story: "Bilgi ışık hızında akıyor; dünya birbirine bağlandı." },
+  { id: "space",      name: "Uzay Çağı",        icon: "🧑‍🚀",   threshold: 2.5e11,mult: 2.6,  bg2: "#1a1f3a", story: "İnsanlık yıldızlara açıldı." },
+  { id: "galactic",   name: "Galaktik Çağ",     icon: "🦾",     threshold: 4e13,  mult: 3.0,  bg2: "#2a1040", story: "Galaksi artık eviniz. Tür sınırı aştı." },
 ];
 
 // state.era'yı geçerli aralığa sabitler (bozuk/eski kayıtlara karşı).
@@ -123,6 +130,17 @@ function eraMultiplier() {
   let m = 1;
   for (let i = 0; i <= state.era && i < ERAS.length; i++) m *= ERAS[i].mult;
   return m;
+}
+
+// Bir üretici/yükseltme şu anki çağda açık mı? (era alanı yoksa hep açık)
+function isUnlocked(item) {
+  return state.era >= (item.era || 0);
+}
+
+// Bir üretici/yükseltmenin açılacağı çağın adı (kilit etiketi için).
+function unlockEraName(item) {
+  const i = Math.min(item.era || 0, ERAS.length - 1);
+  return ERAS[i].name;
 }
 
 /* --- Savaş + ekipman ------------------------------------------------
@@ -351,6 +369,7 @@ const el = {
 /* --- Satın alma ------------------------------------------------------- */
 
 function buyGenerator(gen) {
+  if (!isUnlocked(gen)) return; // çağ kilidi: erken alım engellenir
   const { n, cost } = purchasePlan(gen);
   if (n < 1 || state.population < cost) return;
   state.population -= cost;
@@ -413,6 +432,7 @@ function doPrestigeNow(gain) {
 }
 
 function buyUpgrade(up) {
+  if (!isUnlocked(up)) return; // çağ kilidi: erken alım engellenir
   if (state.upgrades[up.id] || state.population < up.cost) return;
   state.population -= up.cost;
   state.upgrades[up.id] = true;
@@ -577,6 +597,19 @@ function renderShops() {
   GENERATORS.forEach((gen) => {
     const btn = el.generators.querySelector(`[data-gen="${gen.id}"]`);
     if (!btn) return;
+    // Çağ kilidi: henüz açılmadıysa soluk kart + kilit etiketi göster.
+    if (!isUnlocked(gen)) {
+      btn.classList.add("locked");
+      btn.disabled = true;
+      btn.innerHTML = `
+        <span class="card-icon">🔒</span>
+        <span class="card-body">
+          <span class="card-title">${gen.name}</span>
+          <span class="card-desc">${unlockEraName(gen)}'nda açılır</span>
+        </span>`;
+      return;
+    }
+    btn.classList.remove("locked");
     const { n, cost } = purchasePlan(gen);
     const affordable = n >= 1 && state.population >= cost;
     btn.disabled = !affordable;
@@ -596,6 +629,19 @@ function renderShops() {
   UPGRADES.forEach((up) => {
     const btn = el.upgrades.querySelector(`[data-upgrade="${up.id}"]`);
     if (!btn) return;
+    // Çağ kilidi: henüz açılmadıysa soluk kart + kilit etiketi göster.
+    if (!isUnlocked(up)) {
+      btn.classList.add("locked");
+      btn.disabled = true;
+      btn.innerHTML = `
+        <span class="card-icon">🔒</span>
+        <span class="card-body">
+          <span class="card-title">${up.name}</span>
+          <span class="card-desc">${unlockEraName(up)}'nda açılır</span>
+        </span>`;
+      return;
+    }
+    btn.classList.remove("locked");
     const bought = !!state.upgrades[up.id];
     const affordable = state.population >= up.cost;
     btn.disabled = bought || !affordable;
@@ -712,6 +758,7 @@ function checkEra() {
   updateAvatar();
   applyEraTheme();
   renderEra();
+  renderShops(); // yeni çağda açılan üretici/yükseltmeleri kilitten çıkar
   showEraPopup(target);
   say(randomFrom(ERA_QUIPS[ERAS[target].id] || GENERIC_QUIPS), 4000);
   if (state.soundOn && window.SFX) {
@@ -991,7 +1038,7 @@ function renderResource() {
 function refreshAffordability() {
   GENERATORS.forEach((gen) => {
     const btn = el.generators.querySelector(`[data-gen="${gen.id}"]`);
-    if (!btn) return;
+    if (!btn || btn.classList.contains("locked")) return; // kilitliyse renderShops yönetir
     const { n, cost } = purchasePlan(gen);
     const affordable = n >= 1 && state.population >= cost;
     btn.disabled = !affordable;
@@ -1008,7 +1055,7 @@ function refreshAffordability() {
   });
   UPGRADES.forEach((up) => {
     const btn = el.upgrades.querySelector(`[data-upgrade="${up.id}"]`);
-    if (!btn || state.upgrades[up.id]) return;
+    if (!btn || state.upgrades[up.id] || btn.classList.contains("locked")) return;
     const affordable = state.population >= up.cost;
     btn.disabled = !affordable;
     const costEl = btn.querySelector(".card-cost");
@@ -1456,6 +1503,7 @@ function init() {
   // Popup yalnızca oyun sırasında YENİ bir çağ açılınca gösterilir (checkEra).
   state.era = Math.max(state.era || 0, highestEraIndex(state.totalEarned));
   sanitizeEra();
+  renderShops(); // çağ kesinleştikten sonra kilitleri doğru çiz (buildShops'tan sonra)
   updateAvatar();
   applyEraTheme();
   // 2D çağ sahnesini kur (saf CSS/SVG; her ortamda çalışır). Tık alanı odur.

@@ -27,6 +27,9 @@
       geri yükle için ortak `#confirmModal` + `#restoreModal`
 - [x] **combat.js modülü** (1.13) — savaş + ekipman game.js'ten ayrıldı
 - [x] **Cross-platform `npm run serve`** (1.13) — npx http-server tabanlı
+- [x] **Çağa bağlı açılış** (1.14) — üretici/yükseltme temasına uygun çağda
+      açılır (kilitli = soluk 🔒 kart); çağ eşikleri üretici merdivenine
+      hizalandı, maliyetler değişmedi (kayıt güvenli)
 
 ## Sırada (kısa vade)
 

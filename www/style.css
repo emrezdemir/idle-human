@@ -520,6 +520,27 @@ main {
   cursor: not-allowed;
 }
 
+/* Çağ kilidi: henüz açılmamış üretici/yükseltme. Soluk + kesik çerçeve,
+   böylece "yakında" hissi verir ama satın alınamaz olduğu bellidir. */
+.card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: transparent;
+  border: 1px dashed var(--text-dim);
+  box-shadow: none;
+}
+.card.locked .card-icon {
+  filter: grayscale(1);
+  opacity: 0.8;
+}
+.card.locked .card-title {
+  color: var(--text-dim);
+}
+.card.locked .card-desc {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .card-icon {
   font-size: 2rem;
   flex-shrink: 0;

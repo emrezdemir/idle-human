@@ -10,11 +10,21 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.13.1",
+  version: "1.14.0",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.14.0",
+      title: "Çağa bağlı üretici & yükseltme kilidi",
+      notes: [
+        "Üreticiler ve yükseltmeler artık temasına uygun ÇAĞDA açılıyor: Sanayi Devrimi'nde Yapay Zekâ/Uzay Filosu/Dyson satın alınamaz.",
+        "Henüz açılmayanlar soluk 🔒 kart olarak listede durur ('… Çağı'nda açılır') — önünü görürsün, hedef oluşur.",
+        "Çağ eşikleri üretici maliyet merdivenine hizalandı: her çağ kendi üreticisini tam karşılayabildiğin an açar; ilerleme yavaşlamaz.",
+        "Artık 'Dyson'a sahipsen Galaktik Çağ'dasın' tutarlı — çağ adı ekonomine uyuyor. Üretici maliyetleri değişmedi (kayıt güvenli).",
+      ],
+    },
     {
       version: "1.13.1",
       title: "Açılış çökmesi düzeltildi (savaş init sırası)",
