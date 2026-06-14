@@ -44,7 +44,10 @@
   // deps: { getState, clickPower, totalPerSecond, spawnFloatText,
   //        spawnDamageText, enemyCenter, showToast, say, randomFrom }
   let deps = null;
-  function S() { return deps.getState(); } // güncel state'i her seferinde tazele
+  // deps henüz bağlanmadıysa null döner; okuma fonksiyonları bunu tolere eder.
+  // (game.js init sırasında buildShops/globalMultiplier, Combat.init'ten önce
+  //  bu modüle dokunabilir — o anda çökmek yerine güvenli varsayılan ver.)
+  function S() { return deps ? deps.getState() : null; }
 
   /* --- Stage / boss yardımcıları ---------------------------------- */
   function isBossStage(s) { return s % BOSS_EVERY === 0; }
@@ -54,12 +57,12 @@
     if (isBossStage(s)) hp *= BOSS_HP_MULT;
     return hp;
   }
-  function bossMultiplier() { return 1 + (S().bossWins || 0) * BOSS_BONUS; }
+  function bossMultiplier() { const st = S(); return 1 + ((st && st.bossWins) || 0) * BOSS_BONUS; }
 
   /* --- Ekipman çarpanları ----------------------------------------- */
   function equipPct(slot) {
     const st = S();
-    const p = st.equip && st.equip[slot];
+    const p = st && st.equip && st.equip[slot];
     return p ? p.power : 0;
   }
   function equipTapMult() { return 1 + equipPct("weapon") / 100; }

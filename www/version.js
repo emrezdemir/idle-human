@@ -10,11 +10,20 @@
 "use strict";
 
 window.APP_VERSION = {
-  version: "1.13.0",
+  version: "1.13.1",
   build: "dev", // CI bunu kısa commit hash'iyle değiştirir
   date: "",     // CI bunu derleme tarihiyle (YYYY-MM-DD) değiştirir
 
   changelog: [
+    {
+      version: "1.13.1",
+      title: "Açılış çökmesi düzeltildi (savaş init sırası)",
+      notes: [
+        "Oyun açılışta çöküyordu: buildShops, Combat.init'ten önce çalışıp deps null iken bossMultiplier()'a dokunuyordu (combat.js:47 'getState' hatası).",
+        "Savaş modülünün state erişimi artık buildShops/renderResource'tan ÖNCE bağlanıyor.",
+        "Sağlamlaştırma: combat.js okuma fonksiyonları deps bağlanmadan çağrılsa bile güvenli varsayılan döner, çökmez.",
+      ],
+    },
     {
       version: "1.13.0",
       title: "Cila paketi: reroll + güvenli kayıt + denge",

@@ -1425,6 +1425,26 @@ function scheduleTurbo() {
 function init() {
   const loaded = load();
 
+  // Savaş modülünün state erişimini ÖNCE bağla: buildShops/renderResource,
+  // globalMultiplier üzerinden window.Combat.bossMultiplier()'a dokunur ve bu
+  // deps gerektirir. Bağlamadan önce çağrılırsa deps null olur ve oyun çöker.
+  // (renderEquipment/initEnemy ise state sanitize + Scene2D mount sonrasına kalır.)
+  if (window.Combat) {
+    window.Combat.init({
+      getState: () => state,
+      clickPower,
+      totalPerSecond,
+      spawnFloatText,
+      enemyCenter,
+      showToast,
+      say,
+      randomFrom,
+      fmt,
+      renderResource,
+      onRerollClick: openRerollConfirm,
+    });
+  }
+
   // Görsel efekt motorunu başlat (arka plan parçacıkları her zaman çalışır)
   if (window.Effects) Effects.init();
 
@@ -1449,19 +1469,7 @@ function init() {
   if (typeof state.bossWins !== "number" || state.bossWins < 0) state.bossWins = 0;
   state.equip = Object.assign({ weapon: null, armor: null, ring: null }, state.equip || {});
   if (window.Combat) {
-    window.Combat.init({
-      getState: () => state,
-      clickPower,
-      totalPerSecond,
-      spawnFloatText,
-      enemyCenter,
-      showToast,
-      say,
-      randomFrom,
-      fmt,
-      renderResource,
-      onRerollClick: openRerollConfirm,
-    });
+    // deps yukarıda init() başında bağlandı; burada yalnızca görsel kurulum.
     window.Combat.renderEquipment();
     window.Combat.initEnemy();
   }
